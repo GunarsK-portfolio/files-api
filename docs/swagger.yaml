@@ -1,0 +1,160 @@
+basePath: /
+host: localhost:8085
+info:
+  contact: {}
+  description: File upload/download service for portfolio - handles S3/MinIO storage
+    operations
+  title: Portfolio Files API
+  version: "1.0"
+paths:
+  /files:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload file to MinIO/S3 and create database record
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: 'File type: portfolio-image, miniature-image, document'
+        in: formData
+        name: fileType
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload file to S3
+      tags:
+      - files
+  /files/{fileType}/{key}:
+    get:
+      description: Stream file from MinIO/S3 storage
+      parameters:
+      - description: 'File type: portfolio-image, miniature-image, document'
+        in: path
+        name: fileType
+        required: true
+        type: string
+      - description: File key/path
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Download file from S3
+      tags:
+      - files
+  /files/{id}:
+    delete:
+      description: Delete file by ID from both S3 storage and database
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete file from S3 and database
+      tags:
+      - files
+  /health:
+    get:
+      description: Check if service is healthy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - health
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

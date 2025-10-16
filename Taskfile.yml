@@ -1,0 +1,52 @@
+version: '3'
+
+tasks:
+  run:
+    desc: Run the files API locally
+    cmds:
+      - go run cmd/api/main.go
+
+  build:
+    desc: Build the files API binary
+    cmds:
+      - go build -o bin/files-api cmd/api/main.go
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -v ./...
+
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run
+
+  swagger:
+    desc: Generate Swagger documentation
+    cmds:
+      - swag init -g cmd/api/main.go -o docs
+
+  clean:
+    desc: Clean build artifacts and docs
+    cmds:
+      - rm -rf bin/ docs/
+
+  docker-build:
+    desc: Build Docker image
+    cmds:
+      - docker build -t files-api .
+
+  docker-run:
+    desc: Run service with docker-compose
+    cmds:
+      - docker-compose up -d
+
+  docker-stop:
+    desc: Stop files-api container
+    cmds:
+      - docker stop files-api
+
+  docker-logs:
+    desc: View files API logs
+    cmds:
+      - docker-compose logs -f files-api
