@@ -1,53 +1,71 @@
 package middleware
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
-func JWTAuth(jwtSecret string) gin.HandlerFunc {
+type AuthMiddleware struct {
+	authServiceURL string
+}
+
+func NewAuthMiddleware(authServiceURL string) *AuthMiddleware {
+	return &AuthMiddleware{authServiceURL: authServiceURL}
+}
+
+func (m *AuthMiddleware) ValidateToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+		token := extractToken(c)
+		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization header required"})
 			c.Abort()
 			return
 		}
 
-		// Extract token from "Bearer <token>"
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
-			c.Abort()
-			return
-		}
-
-		tokenString := parts[1]
-
-		// Parse and validate token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Validate signing method
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, jwt.ErrSignatureInvalid
-			}
-			return []byte(jwtSecret), nil
-		})
-
-		if err != nil || !token.Valid {
+		// Validate token with auth service
+		valid, err := m.validateWithAuthService(token)
+		if err != nil || !valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
 			c.Abort()
 			return
 		}
 
-		// Extract claims and store in context
-		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			c.Set("user_id", claims["user_id"])
-			c.Set("username", claims["username"])
-		}
-
 		c.Next()
 	}
+}
+
+func (m *AuthMiddleware) validateWithAuthService(token string) (bool, error) {
+	url := fmt.Sprintf("%s/api/v1/auth/validate", m.authServiceURL)
+
+	reqBody, _ := json.Marshal(map[string]string{"token": token})
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, nil
+	}
+
+	var result map[string]bool
+	body, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(body, &result)
+
+	return result["valid"], nil
+}
+
+func extractToken(c *gin.Context) string {
+	bearerToken := c.GetHeader("Authorization")
+	parts := strings.Split(bearerToken, " ")
+	if len(parts) == 2 && parts[0] == "Bearer" {
+		return parts[1]
+	}
+	return ""
 }

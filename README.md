@@ -4,7 +4,7 @@ File upload/download service for portfolio platform.
 
 ## Features
 
-- File upload with JWT authentication
+- File upload with JWT authentication (validated via auth-service)
 - Public file download/streaming
 - File deletion (storage + database)
 - Semantic file types (portfolio-image, miniature-image, document)
@@ -36,7 +36,7 @@ files-api/
 │   ├── config/           # Configuration
 │   ├── database/         # Database connection
 │   ├── handlers/         # HTTP handlers
-│   ├── middleware/       # JWT authentication
+│   ├── middleware/       # Authentication (validates with auth-service)
 │   ├── repository/       # Data access layer
 │   ├── routes/           # Route definitions
 │   └── storage/          # MinIO/S3 integration
@@ -70,13 +70,13 @@ S3_ENDPOINT=http://localhost:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
 S3_USE_SSL=false
-JWT_SECRET=your-secret-key
+AUTH_SERVICE_URL=http://localhost:8084
 ```
 
 3. Start infrastructure (if not running):
 ```bash
 # From infrastructure directory
-docker-compose up -d postgres minio flyway
+docker-compose up -d postgres minio flyway auth-service
 ```
 
 4. Run the service:
@@ -133,7 +133,7 @@ When running, Swagger UI is available at:
 | `S3_ACCESS_KEY` | MinIO access key | `minioadmin` |
 | `S3_SECRET_KEY` | MinIO secret key | `minioadmin` |
 | `S3_USE_SSL` | Use SSL for S3 | `false` |
-| `JWT_SECRET` | JWT validation secret | - |
+| `AUTH_SERVICE_URL` | Auth service endpoint for JWT validation | `http://localhost:8084` |
 | `MAX_FILE_SIZE` | Max upload size (bytes) | `10485760` (10MB) |
 | `ALLOWED_FILE_TYPES` | Allowed MIME types | `image/jpeg,image/jpg,image/png,image/gif,image/webp,application/pdf` |
 

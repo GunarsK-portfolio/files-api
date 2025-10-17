@@ -29,8 +29,9 @@ func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config) {
 	router.GET("/files/:fileType/*key", handler.DownloadFile)
 
 	// Protected routes (JWT required)
+	authMiddleware := middleware.NewAuthMiddleware(cfg.AuthServiceURL)
 	protected := router.Group("/")
-	protected.Use(middleware.JWTAuth(cfg.JWTSecret))
+	protected.Use(authMiddleware.ValidateToken())
 	{
 		protected.POST("/files", handler.UploadFile)
 		protected.DELETE("/files/:id", handler.DeleteFile)
