@@ -92,7 +92,7 @@ func (h *Handler) UploadFile(c *gin.Context) {
 		"fileName": fileRecord.FileName,
 		"fileSize": fileRecord.FileSize,
 		"mimeType": fileRecord.MimeType,
-		"url":      fmt.Sprintf("/files/%s/%s", fileType, key),
+		"url":      fmt.Sprintf("/api/v1/files/%s/%s", fileType, key),
 		"fileType": fileType,
 	})
 }
@@ -120,8 +120,11 @@ func (h *Handler) getBucketForFileType(fileType, contentType string) (string, er
 			return "", fmt.Errorf("%s requires image content type", fileType)
 		}
 	case "document":
-		if !strings.HasPrefix(contentType, "application/pdf") {
-			return "", fmt.Errorf("document requires PDF content type")
+		isPDF := strings.HasPrefix(contentType, "application/pdf")
+		isWord := strings.HasPrefix(contentType, "application/msword") ||
+			strings.HasPrefix(contentType, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+		if !isPDF && !isWord {
+			return "", fmt.Errorf("document requires PDF or Word document content type")
 		}
 	}
 

@@ -18,7 +18,7 @@ type Config struct {
 	S3AccessKey      string
 	S3SecretKey      string
 	S3UseSSL         bool
-	JWTSecret        string
+	AuthServiceURL   string
 	MaxFileSize      int64
 	AllowedFileTypes []string
 }
@@ -47,7 +47,7 @@ func Load() *Config {
 		S3AccessKey:      getEnvRequired("S3_ACCESS_KEY"),
 		S3SecretKey:      getEnvRequired("S3_SECRET_KEY"),
 		S3UseSSL:         getEnvBool("S3_USE_SSL", false),
-		JWTSecret:        getEnvRequired("JWT_SECRET"),
+		AuthServiceURL:   getEnvRequired("AUTH_SERVICE_URL"),
 		MaxFileSize:      maxFileSize,
 		AllowedFileTypes: allowedTypes,
 	}

@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	CreateFile(bucket, key, fileName, fileType string, fileSize int64, mimeType string) (*StorageFile, error)
 	GetFileByID(id int64) (*StorageFile, error)
+	GetFileByKey(bucket, key string) (*StorageFile, error)
 	DeleteFile(id int64) error
 }
 
@@ -55,6 +56,14 @@ func (r *repository) CreateFile(bucket, key, fileName, fileType string, fileSize
 func (r *repository) GetFileByID(id int64) (*StorageFile, error) {
 	var file StorageFile
 	if err := r.db.First(&file, id).Error; err != nil {
+		return nil, err
+	}
+	return &file, nil
+}
+
+func (r *repository) GetFileByKey(bucket, key string) (*StorageFile, error) {
+	var file StorageFile
+	if err := r.db.Where("s3_bucket = ? AND s3_key = ?", bucket, key).First(&file).Error; err != nil {
 		return nil, err
 	}
 	return &file, nil
