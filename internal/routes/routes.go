@@ -23,18 +23,22 @@ func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config) {
 	})
 
 	// Health check
-	router.GET("/health", handler.HealthCheck)
+	router.GET("/api/v1/health", handler.HealthCheck)
 
-	// Public routes (no auth)
-	router.GET("/files/:fileType/*key", handler.DownloadFile)
-
-	// Protected routes (JWT required)
-	authMiddleware := middleware.NewAuthMiddleware(cfg.AuthServiceURL)
-	protected := router.Group("/")
-	protected.Use(authMiddleware.ValidateToken())
+	// API v1 routes
+	v1 := router.Group("/api/v1")
 	{
-		protected.POST("/files", handler.UploadFile)
-		protected.DELETE("/files/:id", handler.DeleteFile)
+		// Public routes (no auth)
+		v1.GET("/files/:fileType/*key", handler.DownloadFile)
+
+		// Protected routes (JWT required)
+		authMiddleware := middleware.NewAuthMiddleware(cfg.AuthServiceURL)
+		protected := v1.Group("/")
+		protected.Use(authMiddleware.ValidateToken())
+		{
+			protected.POST("/files", handler.UploadFile)
+			protected.DELETE("/files/:id", handler.DeleteFile)
+		}
 	}
 
 	// Swagger documentation

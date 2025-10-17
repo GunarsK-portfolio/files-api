@@ -70,7 +70,7 @@ S3_ENDPOINT=http://localhost:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
 S3_USE_SSL=false
-AUTH_SERVICE_URL=http://localhost:8084
+AUTH_SERVICE_URL=http://localhost:8084/api/v1
 ```
 
 3. Start infrastructure (if not running):
@@ -100,14 +100,14 @@ swag init -g cmd/api/main.go -o docs        # Generate Swagger docs
 Base URL: `http://localhost:8085`
 
 ### Health Check
-- `GET /health` - Service health status
+- `GET /api/v1/health` - Service health status
 
 ### Public Endpoints
-- `GET /files/{fileType}/{key}` - Download file
+- `GET /api/v1/files/{fileType}/{key}` - Download file
 
 ### Protected Endpoints (JWT Required)
-- `POST /files` - Upload file (multipart: file, fileType)
-- `DELETE /files/{id}` - Delete file by ID
+- `POST /api/v1/files` - Upload file (multipart: file, fileType)
+- `DELETE /api/v1/files/{id}` - Delete file by ID
 
 **File Types:**
 - `portfolio-image` - Professional portfolio project images
@@ -133,9 +133,9 @@ When running, Swagger UI is available at:
 | `S3_ACCESS_KEY` | MinIO access key | `minioadmin` |
 | `S3_SECRET_KEY` | MinIO secret key | `minioadmin` |
 | `S3_USE_SSL` | Use SSL for S3 | `false` |
-| `AUTH_SERVICE_URL` | Auth service endpoint for JWT validation | `http://localhost:8084` |
+| `AUTH_SERVICE_URL` | Auth service base URL for JWT validation | `http://localhost:8084/api/v1` |
 | `MAX_FILE_SIZE` | Max upload size (bytes) | `10485760` (10MB) |
-| `ALLOWED_FILE_TYPES` | Allowed MIME types | `image/jpeg,image/jpg,image/png,image/gif,image/webp,application/pdf` |
+| `ALLOWED_FILE_TYPES` | Allowed MIME types | `image/jpeg,image/jpg,image/png,image/gif,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword` |
 
 ## Development
 

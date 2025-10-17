@@ -251,7 +251,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8085",
-	BasePath:         "/",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Portfolio Files API",
 	Description:      "File upload/download service for portfolio - handles S3/MinIO storage operations",

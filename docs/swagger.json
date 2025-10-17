@@ -7,7 +7,7 @@
         "version": "1.0"
     },
     "host": "localhost:8085",
-    "basePath": "/",
+    "basePath": "/api/v1",
     "paths": {
         "/files": {
             "post": {

@@ -18,7 +18,7 @@ import (
 // @version 1.0
 // @description File upload/download service for portfolio - handles S3/MinIO storage operations
 // @host localhost:8085
-// @BasePath /
+// @BasePath /api/v1
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization

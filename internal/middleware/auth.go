@@ -41,7 +41,7 @@ func (m *AuthMiddleware) ValidateToken() gin.HandlerFunc {
 }
 
 func (m *AuthMiddleware) validateWithAuthService(token string) (bool, error) {
-	url := fmt.Sprintf("%s/api/v1/auth/validate", m.authServiceURL)
+	url := fmt.Sprintf("%s/auth/validate", m.authServiceURL)
 
 	reqBody, _ := json.Marshal(map[string]string{"token": token})
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
