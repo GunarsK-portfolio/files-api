@@ -1,15 +1,15 @@
 module github.com/GunarsK-portfolio/files-api
 
-go 1.25
+go 1.25.2
 
 require (
+	github.com/GunarsK-portfolio/portfolio-common v0.1.0
 	github.com/gin-gonic/gin v1.11.0
 	github.com/google/uuid v1.6.0
 	github.com/minio/minio-go/v7 v7.0.82
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
-	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.0
 )
 
@@ -69,4 +69,5 @@ require (
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
+	gorm.io/driver/postgres v1.6.0 // indirect
 )

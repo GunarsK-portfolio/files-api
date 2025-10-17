@@ -3,7 +3,7 @@ package routes
 import (
 	"github.com/GunarsK-portfolio/files-api/internal/config"
 	"github.com/GunarsK-portfolio/files-api/internal/handlers"
-	"github.com/GunarsK-portfolio/files-api/internal/middleware"
+	common "github.com/GunarsK-portfolio/portfolio-common/middleware"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -32,7 +32,7 @@ func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config) {
 		v1.GET("/files/:fileType/*key", handler.DownloadFile)
 
 		// Protected routes (JWT required)
-		authMiddleware := middleware.NewAuthMiddleware(cfg.AuthServiceURL)
+		authMiddleware := common.NewAuthMiddleware(cfg.AuthServiceURL)
 		protected := v1.Group("/")
 		protected.Use(authMiddleware.ValidateToken())
 		{
