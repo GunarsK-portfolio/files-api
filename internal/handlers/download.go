@@ -22,6 +22,10 @@ import (
 func (h *Handler) DownloadFile(c *gin.Context) {
 	fileType := c.Param("fileType")
 	key := c.Param("key")
+	// Remove leading slash from key (gin's *key param includes the /)
+	if len(key) > 0 && key[0] == '/' {
+		key = key[1:]
+	}
 
 	// Map fileType to bucket
 	bucket, err := fileTypeToBucket(fileType)
@@ -30,10 +34,17 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 		return
 	}
 
+	// Get file metadata from database to get original filename
+	fileRecord, err := h.repo.GetFileByKey(bucket, key)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "file not found in database"})
+		return
+	}
+
 	// Get file from S3
 	object, err := h.storage.GetObject(c.Request.Context(), bucket, key)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "file not found in storage"})
 		return
 	}
 	defer object.Close()
@@ -45,9 +56,10 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 		return
 	}
 
-	// Set headers
+	// Set headers with original filename
 	c.Header("Content-Type", stat.ContentType)
 	c.Header("Content-Length", fmt.Sprintf("%d", stat.Size))
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileRecord.FileName))
 
 	// Stream file
 	if _, err := io.Copy(c.Writer, object); err != nil {

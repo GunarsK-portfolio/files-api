@@ -44,10 +44,17 @@ func (m *AuthMiddleware) validateWithAuthService(token string) (bool, error) {
 	url := fmt.Sprintf("%s/auth/validate", m.authServiceURL)
 
 	reqBody, _ := json.Marshal(map[string]string{"token": token})
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return false, err
 	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -56,7 +63,10 @@ func (m *AuthMiddleware) validateWithAuthService(token string) (bool, error) {
 
 	var result map[string]bool
 	body, _ := io.ReadAll(resp.Body)
-	json.Unmarshal(body, &result)
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return false, err
+	}
 
 	return result["valid"], nil
 }
