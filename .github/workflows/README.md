@@ -1,0 +1,52 @@
+# GitHub Actions CI/CD
+
+## Workflows
+
+### CI Pipeline (`ci.yml`)
+
+Comprehensive continuous integration pipeline that runs on:
+- Pull requests to `main` or `develop`
+- Pushes to `main` or `develop`
+- Manual workflow dispatch
+
+**Jobs:**
+
+1. **Lint** - Code quality checks with golangci-lint
+2. **Test** - Unit tests with race detection and coverage reporting
+3. **Vulnerability Scan** - Dependency security scanning with govulncheck
+4. **Docker Build & Scan** - Build image and scan with Trivy for vulnerabilities
+5. **Security Analysis** - Static security analysis with gosec
+6. **Code Quality** - Format checks, go vet, and ineffassign detection
+
+**Security Features:**
+- Results uploaded to GitHub Security tab (SARIF format)
+- Fails on CRITICAL/HIGH vulnerabilities
+- Codecov integration for coverage tracking
+
+## Status Badges
+
+Add these to your README.md:
+
+```markdown
+![CI](https://github.com/GunarsK-portfolio/files-api/workflows/CI/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/GunarsK-portfolio/files-api)](https://goreportcard.com/report/github.com/GunarsK-portfolio/files-api)
+[![codecov](https://codecov.io/gh/GunarsK-portfolio/files-api/branch/main/graph/badge.svg)](https://codecov.io/gh/GunarsK-portfolio/files-api)
+```
+
+## Local Testing
+
+Using Task:
+```bash
+task fmt            # Format code
+task test           # Run tests
+task test-coverage  # Run tests with coverage report
+task lint           # Run golangci-lint
+task vuln           # Check for vulnerabilities
+task ci             # Run all CI checks locally
+task install-tools  # Install dev tools (golangci-lint, govulncheck, etc.)
+```
+
+## Configuration Files
+
+- `.golangci.yml` - golangci-lint configuration
+- `.dockerignore` - Files excluded from Docker builds
