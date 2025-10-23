@@ -1,5 +1,7 @@
 # Files API
 
+![CI](https://github.com/GunarsK-portfolio/files-api/workflows/CI/badge.svg)
+
 File upload/download service for portfolio platform.
 
 ## Features
@@ -86,28 +88,42 @@ go run cmd/api/main.go
 
 ## Available Commands
 
+Using Task:
+```bash
+task run            # Run the service
+task build          # Build binary
+task fmt            # Format code
+task test           # Run tests
+task test-coverage  # Run tests with coverage report
+task lint           # Run golangci-lint
+task vuln           # Check for vulnerabilities
+task ci             # Run all CI checks locally
+task swagger        # Generate Swagger docs
+task clean          # Clean build artifacts
+task docker-build   # Build Docker image
+task install-tools  # Install dev tools (golangci-lint, govulncheck, etc.)
+```
+
 Using Go directly:
 ```bash
-go run cmd/api/main.go                      # Run
-go build -o bin/files-api cmd/api/main.go   # Build
-go test ./...                                # Test
-golangci-lint run                            # Lint
-swag init -g cmd/api/main.go -o docs        # Generate Swagger docs
+go run cmd/api/main.go       # Run
+go build -o bin/files-api cmd/api/main.go  # Build
+go test ./...                # Test
 ```
 
 ## API Endpoints
 
-Base URL: `http://localhost:8085`
+Base URL: `http://localhost:8085/api/v1`
 
 ### Health Check
-- `GET /api/v1/health` - Service health status
+- `GET /health` - Service health status
 
 ### Public Endpoints
-- `GET /api/v1/files/{fileType}/{key}` - Download file
+- `GET /files/{fileType}/{key}` - Download file
 
 ### Protected Endpoints (JWT Required)
-- `POST /api/v1/files` - Upload file (multipart: file, fileType)
-- `DELETE /api/v1/files/{id}` - Delete file by ID
+- `POST /files` - Upload file (multipart: file, fileType)
+- `DELETE /files/{id}` - Delete file by ID
 
 **File Types:**
 - `portfolio-image` - Professional portfolio project images
@@ -136,32 +152,6 @@ When running, Swagger UI is available at:
 | `AUTH_SERVICE_URL` | Auth service base URL for JWT validation | `http://localhost:8084/api/v1` |
 | `MAX_FILE_SIZE` | Max upload size (bytes) | `10485760` (10MB) |
 | `ALLOWED_FILE_TYPES` | Allowed MIME types | `image/jpeg,image/jpg,image/png,image/gif,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword` |
-
-## Development
-
-### Running Tests
-
-```bash
-go test ./...
-```
-
-### Generating Swagger Docs
-
-```bash
-swag init -g cmd/api/main.go -o docs
-```
-
-### Linting
-
-```bash
-golangci-lint run
-```
-
-### Building
-
-```bash
-go build -o bin/files-api cmd/api/main.go
-```
 
 ## Integration
 

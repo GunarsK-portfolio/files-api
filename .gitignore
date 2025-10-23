@@ -1,27 +1,14 @@
-# Binaries for programs and plugins
+# Binaries
+bin/
 *.exe
-*.exe~
 *.dll
 *.so
 *.dylib
 
-# Test binary, built with `go test -c`
+# Test files
 *.test
-
-# Output of the go coverage tool
 *.out
-
-# Go workspace file
-go.work
-
-# Build output
-/bin/
-/build/
-api
-
-# Environment variables
-.env
-.env.local
+coverage.txt
 
 # IDE
 .vscode/
@@ -30,9 +17,24 @@ api
 *.swo
 *~
 
+# Environment
+.env
+.env.local
+
+# Dependencies
+vendor/
+
+# Swagger generated files
+# Uncomment to ignore swagger docs (not recommended - better to commit them)
+# docs/docs.go
+# docs/swagger.json
+# docs/swagger.yaml
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
+__debug_bin*
+.golangci.bck.yml

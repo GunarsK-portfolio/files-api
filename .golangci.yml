@@ -1,35 +1,43 @@
+version: "2"
 run:
-  timeout: 5m
   tests: true
-
 linters:
   enable:
-    - errcheck      # Check for unchecked errors
-    - gosimple      # Simplify code
-    - govet         # Go vet examines Go source code
-    - ineffassign   # Detect ineffectual assignments
-    - staticcheck   # Advanced Go linter
-    - unused        # Check for unused code
-    - gofmt         # Check formatting
-    - goimports     # Check imports
-    - misspell      # Check for misspelled words
-    - revive        # Fast, configurable, extensible, flexible linter
-    - bodyclose     # Check HTTP response body is closed
-    - gosec         # Security issues
-    - unconvert     # Remove unnecessary type conversions
-
-linters-settings:
-  revive:
+    - bodyclose
+    - gosec
+    - misspell
+    - revive
+    - unconvert
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+        - name: package-comments
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: exported
-        disabled: true  # Disable exported comments requirement
-      - name: package-comments
-        disabled: true  # Disable package comments requirement
-
-issues:
-  exclude-rules:
-    # Exclude swagger comments from line length checks
-    - path: '(.+)\.go'
-      linters:
-        - lll
-      text: "comment"
+      - linters:
+          - lll
+        path: (.+)\.go
+        text: comment
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
