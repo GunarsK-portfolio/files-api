@@ -1,6 +1,8 @@
 # Files API
 
 ![CI](https://github.com/GunarsK-portfolio/files-api/workflows/CI/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/GunarsK-portfolio/files-api)](https://goreportcard.com/report/github.com/GunarsK-portfolio/files-api)
+[![codecov](https://codecov.io/gh/GunarsK-portfolio/files-api/branch/main/graph/badge.svg)](https://codecov.io/gh/GunarsK-portfolio/files-api)
 
 File upload/download service for portfolio platform.
 
