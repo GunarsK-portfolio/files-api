@@ -3,13 +3,15 @@ package routes
 import (
 	"github.com/GunarsK-portfolio/files-api/internal/config"
 	"github.com/GunarsK-portfolio/files-api/internal/handlers"
+	"github.com/GunarsK-portfolio/portfolio-common/metrics"
 	common "github.com/GunarsK-portfolio/portfolio-common/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config) {
+func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config, metricsCollector *metrics.Metrics) {
 	// Enable CORS
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
@@ -23,7 +25,9 @@ func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config) {
 	})
 
 	// Health check
-	router.GET("/api/v1/health", handler.HealthCheck)
+	router.GET("/health", handler.HealthCheck)
+	// Metrics
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
