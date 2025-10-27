@@ -1,8 +1,7 @@
 package repository
 
 import (
-	"time"
-
+	commonModels "github.com/GunarsK-portfolio/portfolio-common/models"
 	"gorm.io/gorm"
 )
 
@@ -21,20 +20,7 @@ func New(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-type StorageFile struct {
-	ID        int64     `json:"id" gorm:"primaryKey"`
-	S3Key     string    `json:"s3Key" gorm:"column:s3_key"`
-	S3Bucket  string    `json:"s3Bucket" gorm:"column:s3_bucket"`
-	FileName  string    `json:"fileName" gorm:"column:file_name"`
-	FileSize  int64     `json:"fileSize" gorm:"column:file_size"`
-	MimeType  string    `json:"mimeType" gorm:"column:mime_type"`
-	FileType  string    `json:"fileType" gorm:"column:file_type"`
-	CreatedAt time.Time `json:"createdAt" gorm:"column:created_at"`
-}
-
-func (StorageFile) TableName() string {
-	return "storage.files"
-}
+type StorageFile = commonModels.StorageFile
 
 func (r *repository) CreateFile(bucket, key, fileName, fileType string, fileSize int64, mimeType string) (*StorageFile, error) {
 	file := &StorageFile{
