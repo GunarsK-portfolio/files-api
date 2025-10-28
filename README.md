@@ -32,7 +32,7 @@ File upload/download service for portfolio platform.
 
 ## Project Structure
 
-```
+```text
 files-api/
 ├── cmd/
 │   └── api/              # Application entrypoint
@@ -58,11 +58,13 @@ docker-compose up -d
 ### Local Development
 
 1. Copy environment file:
+
 ```bash
 cp .env.example .env
 ```
 
-2. Update `.env` with your configuration:
+1. Update `.env` with your configuration:
+
 ```env
 PORT=8085
 DB_HOST=localhost
@@ -77,13 +79,15 @@ S3_USE_SSL=false
 AUTH_SERVICE_URL=http://localhost:8084/api/v1
 ```
 
-3. Start infrastructure (if not running):
+1. Start infrastructure (if not running):
+
 ```bash
 # From infrastructure directory
 docker-compose up -d postgres minio flyway auth-service
 ```
 
-4. Run the service:
+1. Run the service:
+
 ```bash
 go run cmd/api/main.go
 ```
@@ -91,6 +95,7 @@ go run cmd/api/main.go
 ## Available Commands
 
 Using Task:
+
 ```bash
 # Development
 task dev:swagger         # Generate Swagger documentation
@@ -123,6 +128,7 @@ task ci:all              # Run all CI checks (format, tidy, lint, vet, test, vul
 ```
 
 Using Go directly:
+
 ```bash
 go run cmd/api/main.go                       # Run
 go build -o bin/files-api cmd/api/main.go    # Build
@@ -134,16 +140,20 @@ go test ./...                                 # Test
 Base URL: `http://localhost:8085/api/v1`
 
 ### Health Check
+
 - `GET /health` - Service health status
 
 ### Public Endpoints
+
 - `GET /files/{fileType}/{key}` - Download file
 
 ### Protected Endpoints (JWT Required)
+
 - `POST /files` - Upload file (multipart: file, fileType)
 - `DELETE /files/{id}` - Delete file by ID
 
 **File Types:**
+
 - `portfolio-image` - Professional portfolio project images
 - `miniature-image` - Miniature painting photos
 - `document` - PDFs, CVs, resumes
@@ -151,6 +161,7 @@ Base URL: `http://localhost:8085/api/v1`
 ## Swagger Documentation
 
 When running, Swagger UI is available at:
+
 - `http://localhost:8085/swagger/index.html`
 
 ## Environment Variables
@@ -167,13 +178,14 @@ When running, Swagger UI is available at:
 | `S3_ACCESS_KEY` | MinIO access key | `minioadmin` |
 | `S3_SECRET_KEY` | MinIO secret key | `minioadmin` |
 | `S3_USE_SSL` | Use SSL for S3 | `false` |
-| `AUTH_SERVICE_URL` | Auth service base URL for JWT validation | `http://localhost:8084/api/v1` |
+| `AUTH_SERVICE_URL` | Auth service URL | `http://localhost:8084/api/v1` |
 | `MAX_FILE_SIZE` | Max upload size (bytes) | `10485760` (10MB) |
-| `ALLOWED_FILE_TYPES` | Allowed MIME types | `image/jpeg,image/jpg,image/png,image/gif,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword` |
+| `ALLOWED_FILE_TYPES` | Allowed MIME types | (see docs for full list) |
 
 ## Integration
 
-This API is used by admin-api for file uploads and by public-api for generating file URLs.
+This API is used by admin-api for uploads and by
+public-api for file URLs.
 
 ## License
 
