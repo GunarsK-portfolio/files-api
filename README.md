@@ -124,7 +124,7 @@ task docker:stop         # Stop running Docker container
 task docker:logs         # View Docker container logs
 
 # CI/CD
-task ci:all              # Run all CI checks (format, tidy, lint, vet, test, vuln)
+task ci:all              # Run all CI checks
 ```
 
 Using Go directly:
