@@ -1,0 +1,38 @@
+language: en-US
+early_access: false
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+  tools:
+    golangci-lint:
+      enabled: true
+    yamllint:
+      enabled: true
+    shellcheck:
+      enabled: true
+chat:
+  auto_reply: true
+tone_instructions: |
+  You are reviewing Go file storage API code for a portfolio management system.
+
+  Focus on:
+  - File upload security (file type validation, size limits, malware scanning)
+  - S3/MinIO integration (proper error handling, presigned URLs, object versioning)
+  - Stream handling (memory efficiency, large file handling)
+  - File path traversal vulnerabilities
+  - Content-Type validation and sanitization
+  - Image processing (if applicable - memory usage, format validation)
+  - Proper cleanup of temporary files
+  - Go idioms and error handling
+  - Concurrency patterns for parallel uploads/downloads
+
+  Security focus: Prevent malicious file uploads, path traversal, and resource exhaustion.
+  Performance focus: Efficient streaming, memory management for large files.
+  Flag any file handling security issues immediately.
