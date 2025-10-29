@@ -45,7 +45,7 @@ task test              # Run tests
 task test:coverage     # Run tests with coverage report
 task lint              # Run golangci-lint
 task security:vuln     # Check for vulnerabilities
-task ci:all            # Run all CI checks locally
+task ci:all            # Run all CI checks
 task dev:install-tools # Install dev tools (golangci-lint, govulncheck, etc.)
 ```
 

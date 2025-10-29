@@ -27,6 +27,7 @@ File upload/download service for portfolio platform.
 ## Prerequisites
 
 - Go 1.25+
+- Node.js 22+ and npm 11+
 - PostgreSQL (or use Docker Compose)
 - MinIO (or use Docker Compose)
 
