@@ -5,6 +5,7 @@
 ### CI Pipeline (`ci.yml`)
 
 Comprehensive continuous integration pipeline that runs on:
+
 - Pull requests to `main` or `develop`
 - Pushes to `main` or `develop`
 - Manual workflow dispatch
@@ -19,6 +20,7 @@ Comprehensive continuous integration pipeline that runs on:
 6. **Code Quality** - Format checks, go vet, and ineffassign detection
 
 **Security Features:**
+
 - Results uploaded to GitHub Security tab (SARIF format)
 - Fails on CRITICAL/HIGH vulnerabilities
 - Codecov integration for coverage tracking
@@ -36,14 +38,15 @@ Add these to your README.md:
 ## Local Testing
 
 Using Task:
+
 ```bash
-task fmt            # Format code
-task test           # Run tests
-task test-coverage  # Run tests with coverage report
-task lint           # Run golangci-lint
-task vuln           # Check for vulnerabilities
-task ci             # Run all CI checks locally
-task install-tools  # Install dev tools (golangci-lint, govulncheck, etc.)
+task format            # Format code
+task test              # Run tests
+task test:coverage     # Run tests with coverage report
+task lint              # Run golangci-lint
+task security:vuln     # Check for vulnerabilities
+task ci:all            # Run all CI checks locally
+task dev:install-tools # Install dev tools (golangci-lint, govulncheck, etc.)
 ```
 
 ## Configuration Files
