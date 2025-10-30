@@ -18,7 +18,7 @@ File upload/download service for portfolio platform.
 
 ## Tech Stack
 
-- **Language**: Go 1.25
+- **Language**: Go 1.25.3
 - **Framework**: Gin
 - **Database**: PostgreSQL (GORM)
 - **Storage**: MinIO (S3-compatible)
