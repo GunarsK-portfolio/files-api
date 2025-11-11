@@ -42,12 +42,13 @@ func main() {
 		Namespace:   "portfolio",
 	})
 
+	//nolint:staticcheck // Embedded field name required due to ambiguous fields
 	db, err := commondb.Connect(commondb.PostgresConfig{
-		Host:     cfg.DBHost,
-		Port:     cfg.DBPort,
-		User:     cfg.DBUser,
-		Password: cfg.DBPassword,
-		DBName:   cfg.DBName,
+		Host:     cfg.DatabaseConfig.Host,
+		Port:     cfg.DatabaseConfig.Port,
+		User:     cfg.DatabaseConfig.User,
+		Password: cfg.DatabaseConfig.Password,
+		DBName:   cfg.DatabaseConfig.Name,
 		SSLMode:  "disable",
 		TimeZone: "UTC",
 	})
@@ -74,8 +75,8 @@ func main() {
 
 	routes.Setup(router, handler, cfg, metricsCollector)
 
-	appLogger.Info("Files API ready", "port", cfg.Port, "environment", os.Getenv("ENVIRONMENT"))
-	if err := router.Run(fmt.Sprintf(":%s", cfg.Port)); err != nil {
+	appLogger.Info("Files API ready", "port", cfg.ServiceConfig.Port, "environment", os.Getenv("ENVIRONMENT"))
+	if err := router.Run(fmt.Sprintf(":%s", cfg.ServiceConfig.Port)); err != nil {
 		appLogger.Error("Failed to start server", "error", err)
 		log.Fatal("Failed to start server:", err)
 	}
