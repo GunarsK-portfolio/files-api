@@ -12,16 +12,9 @@ import (
 )
 
 type Config struct {
-	Port             string `validate:"required,number,min=1,max=65535"`
-	DBHost           string `validate:"required"`
-	DBPort           string `validate:"required,number,min=1,max=65535"`
-	DBUser           string `validate:"required"`
-	DBPassword       string `validate:"required"`
-	DBName           string `validate:"required"`
-	S3Endpoint       string `validate:"required,url"`
-	S3AccessKey      string `validate:"required"`
-	S3SecretKey      string `validate:"required"`
-	S3UseSSL         bool
+	common.DatabaseConfig
+	common.ServiceConfig
+	common.S3Config
 	AuthServiceURL   string   `validate:"required,url"`
 	MaxFileSize      int64    `validate:"gt=0"`
 	AllowedFileTypes []string `validate:"required,min=1,dive,required"`
@@ -41,22 +34,15 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
-		Port:             common.GetEnv("PORT", "8085"),
-		DBHost:           common.GetEnvRequired("DB_HOST"),
-		DBPort:           common.GetEnvRequired("DB_PORT"),
-		DBUser:           common.GetEnvRequired("DB_USER"),
-		DBPassword:       common.GetEnvRequired("DB_PASSWORD"),
-		DBName:           common.GetEnvRequired("DB_NAME"),
-		S3Endpoint:       common.GetEnvRequired("S3_ENDPOINT"),
-		S3AccessKey:      common.GetEnvRequired("S3_ACCESS_KEY"),
-		S3SecretKey:      common.GetEnvRequired("S3_SECRET_KEY"),
-		S3UseSSL:         common.GetEnvBool("S3_USE_SSL", false),
+		DatabaseConfig:   common.NewDatabaseConfig(),
+		ServiceConfig:    common.NewServiceConfig("8085"),
+		S3Config:         common.NewS3Config(),
 		AuthServiceURL:   common.GetEnvRequired("AUTH_SERVICE_URL"),
 		MaxFileSize:      maxFileSize,
 		AllowedFileTypes: allowedTypes,
 	}
 
-	// Validate configuration
+	// Validate service-specific fields
 	validate := validator.New()
 	if err := validate.Struct(cfg); err != nil {
 		panic(fmt.Sprintf("Invalid configuration: %v", err))

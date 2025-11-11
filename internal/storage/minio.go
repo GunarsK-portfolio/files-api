@@ -14,14 +14,15 @@ type Storage struct {
 	client *minio.Client
 }
 
+//nolint:staticcheck // Embedded field name required for clarity
 func New(cfg *config.Config) (*Storage, error) {
 	// Strip protocol from endpoint (MinIO client expects just hostname:port)
-	endpoint := strings.TrimPrefix(cfg.S3Endpoint, "http://")
+	endpoint := strings.TrimPrefix(cfg.S3Config.Endpoint, "http://")
 	endpoint = strings.TrimPrefix(endpoint, "https://")
 
 	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.S3AccessKey, cfg.S3SecretKey, ""),
-		Secure: cfg.S3UseSSL,
+		Creds:  credentials.NewStaticV4(cfg.S3Config.AccessKey, cfg.S3Config.SecretKey, ""),
+		Secure: cfg.S3Config.UseSSL,
 	})
 	if err != nil {
 		return nil, err
