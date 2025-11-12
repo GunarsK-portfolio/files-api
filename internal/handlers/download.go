@@ -35,7 +35,7 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 	}
 
 	// Get file metadata from database to get original filename
-	fileRecord, err := h.repo.GetFileByKey(bucket, key)
+	fileRecord, err := h.repo.GetFileByKey(c.Request.Context(), bucket, key)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "file not found in database"})
 		return

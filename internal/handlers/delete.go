@@ -30,7 +30,7 @@ func (h *Handler) DeleteFile(c *gin.Context) {
 	}
 
 	// Get file from database to get S3 details
-	file, err := h.repo.GetFileByID(id)
+	file, err := h.repo.GetFileByID(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
 		return
@@ -50,7 +50,7 @@ func (h *Handler) DeleteFile(c *gin.Context) {
 	}
 
 	// Delete from database
-	if err := h.repo.DeleteFile(id); err != nil {
+	if err := h.repo.DeleteFile(c.Request.Context(), id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete file record"})
 		return
 	}
