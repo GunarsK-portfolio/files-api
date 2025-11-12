@@ -12,17 +12,14 @@ import (
 )
 
 func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config, metricsCollector *metrics.Metrics) {
-	// Enable CORS
-	router.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-		c.Next()
-	})
+	// Security middleware with CORS validation
+	securityMiddleware := common.NewSecurityMiddleware(
+		cfg.AllowedOrigins,
+		"GET,POST,DELETE,OPTIONS",
+		"Content-Type,Authorization",
+		true,
+	)
+	router.Use(securityMiddleware.Apply())
 
 	// Health check
 	router.GET("/health", handler.HealthCheck)
