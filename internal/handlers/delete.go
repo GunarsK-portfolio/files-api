@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	commonHandlers "github.com/GunarsK-portfolio/portfolio-common/handlers"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,33 +26,33 @@ func (h *Handler) DeleteFile(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file ID"})
+		commonHandlers.RespondError(c, http.StatusBadRequest, "invalid file ID")
 		return
 	}
 
 	// Get file from database to get S3 details
 	file, err := h.repo.GetFileByID(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+		commonHandlers.HandleRepositoryError(c, err, "file not found", "failed to fetch file")
 		return
 	}
 
 	// Map fileType to bucket
 	bucket, err := fileTypeToBucket(file.FileType)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid file type in database"})
+		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "invalid file type in database")
 		return
 	}
 
 	// Delete from S3
 	if err := h.storage.DeleteObject(c.Request.Context(), bucket, file.S3Key); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete file from storage"})
+		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to delete file from storage")
 		return
 	}
 
 	// Delete from database
 	if err := h.repo.DeleteFile(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete file record"})
+		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to delete file record")
 		return
 	}
 

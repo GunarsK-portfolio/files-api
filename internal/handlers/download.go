@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	commonHandlers "github.com/GunarsK-portfolio/portfolio-common/handlers"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,21 +31,21 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 	// Map fileType to bucket
 	bucket, err := fileTypeToBucket(fileType)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		commonHandlers.RespondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Get file metadata from database to get original filename
 	fileRecord, err := h.repo.GetFileByKey(c.Request.Context(), bucket, key)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "file not found in database"})
+		commonHandlers.HandleRepositoryError(c, err, "file not found in database", "failed to fetch file record")
 		return
 	}
 
 	// Get file from S3
 	object, err := h.storage.GetObject(c.Request.Context(), bucket, key)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "file not found in storage"})
+		commonHandlers.LogAndRespondError(c, http.StatusNotFound, err, "file not found in storage")
 		return
 	}
 	defer object.Close()
@@ -52,7 +53,7 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 	// Get object info for content type
 	stat, err := object.Stat()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get file info"})
+		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to get file info")
 		return
 	}
 
@@ -63,7 +64,7 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 
 	// Stream file
 	if _, err := io.Copy(c.Writer, object); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to stream file"})
+		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to stream file")
 		return
 	}
 }

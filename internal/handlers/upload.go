@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	commonHandlers "github.com/GunarsK-portfolio/portfolio-common/handlers"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -28,27 +29,27 @@ func (h *Handler) UploadFile(c *gin.Context) {
 	// Get file from form
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
+		commonHandlers.RespondError(c, http.StatusBadRequest, "file is required")
 		return
 	}
 
 	// Get required fileType parameter
 	fileType := c.PostForm("fileType")
 	if fileType == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "fileType is required (portfolio-image, miniature-image, document)"})
+		commonHandlers.RespondError(c, http.StatusBadRequest, "fileType is required (portfolio-image, miniature-image, document)")
 		return
 	}
 
 	// Validate file size
 	if file.Size > h.cfg.MaxFileSize {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file too large (max %d bytes)", h.cfg.MaxFileSize)})
+		commonHandlers.RespondError(c, http.StatusBadRequest, fmt.Sprintf("file too large (max %d bytes)", h.cfg.MaxFileSize))
 		return
 	}
 
 	// Validate file type
 	contentType := file.Header.Get("Content-Type")
 	if !h.isAllowedContentType(contentType) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type"})
+		commonHandlers.RespondError(c, http.StatusBadRequest, "invalid file type")
 		return
 	}
 
@@ -59,7 +60,7 @@ func (h *Handler) UploadFile(c *gin.Context) {
 	// Open file
 	src, err := file.Open()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open file"})
+		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to open file")
 		return
 	}
 	defer src.Close()
@@ -67,13 +68,13 @@ func (h *Handler) UploadFile(c *gin.Context) {
 	// Determine bucket based on file type
 	bucket, err := h.getBucketForFileType(fileType, contentType)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		commonHandlers.RespondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Upload to S3
 	if err := h.storage.PutObject(c.Request.Context(), bucket, key, src, file.Size, contentType); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload file"})
+		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to upload file")
 		return
 	}
 
@@ -82,7 +83,7 @@ func (h *Handler) UploadFile(c *gin.Context) {
 	if err != nil {
 		// Cleanup S3 file if DB insert fails
 		_ = h.storage.DeleteObject(c.Request.Context(), bucket, key)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create file record"})
+		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to create file record")
 		return
 	}
 
