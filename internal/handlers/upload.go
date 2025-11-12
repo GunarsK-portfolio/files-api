@@ -78,7 +78,7 @@ func (h *Handler) UploadFile(c *gin.Context) {
 	}
 
 	// Create database record
-	fileRecord, err := h.repo.CreateFile(bucket, key, file.Filename, fileType, file.Size, contentType)
+	fileRecord, err := h.repo.CreateFile(c.Request.Context(), bucket, key, file.Filename, fileType, file.Size, contentType)
 	if err != nil {
 		// Cleanup S3 file if DB insert fails
 		_ = h.storage.DeleteObject(c.Request.Context(), bucket, key)
