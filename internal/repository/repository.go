@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	commonModels "github.com/GunarsK-portfolio/portfolio-common/models"
 	"gorm.io/gorm"
@@ -35,7 +36,7 @@ func (r *repository) CreateFile(ctx context.Context, bucket, key, fileName, file
 	}
 
 	if err := r.db.WithContext(ctx).Create(file).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create file %s in bucket %s: %w", key, bucket, err)
 	}
 
 	return file, nil
@@ -44,7 +45,7 @@ func (r *repository) CreateFile(ctx context.Context, bucket, key, fileName, file
 func (r *repository) GetFileByID(ctx context.Context, id int64) (*StorageFile, error) {
 	var file StorageFile
 	if err := r.db.WithContext(ctx).First(&file, id).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get file by id %d: %w", id, err)
 	}
 	return &file, nil
 }
@@ -52,11 +53,14 @@ func (r *repository) GetFileByID(ctx context.Context, id int64) (*StorageFile, e
 func (r *repository) GetFileByKey(ctx context.Context, bucket, key string) (*StorageFile, error) {
 	var file StorageFile
 	if err := r.db.WithContext(ctx).Where("s3_bucket = ? AND s3_key = ?", bucket, key).First(&file).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get file by key %s in bucket %s: %w", key, bucket, err)
 	}
 	return &file, nil
 }
 
 func (r *repository) DeleteFile(ctx context.Context, id int64) error {
-	return r.db.WithContext(ctx).Delete(&StorageFile{}, id).Error
+	if err := r.db.WithContext(ctx).Delete(&StorageFile{}, id).Error; err != nil {
+		return fmt.Errorf("failed to delete file id %d: %w", id, err)
+	}
+	return nil
 }
