@@ -11,9 +11,11 @@ import (
 	"github.com/GunarsK-portfolio/files-api/internal/repository"
 	"github.com/GunarsK-portfolio/files-api/internal/routes"
 	"github.com/GunarsK-portfolio/files-api/internal/storage"
+	"github.com/GunarsK-portfolio/portfolio-common/audit"
 	commondb "github.com/GunarsK-portfolio/portfolio-common/database"
 	"github.com/GunarsK-portfolio/portfolio-common/logger"
 	"github.com/GunarsK-portfolio/portfolio-common/metrics"
+	commonrepo "github.com/GunarsK-portfolio/portfolio-common/repository"
 	"github.com/gin-gonic/gin"
 )
 
@@ -66,11 +68,13 @@ func main() {
 	appLogger.Info("Storage initialized")
 
 	repo := repository.New(db)
-	handler := handlers.New(repo, stor, cfg)
+	actionLogRepo := commonrepo.NewActionLogRepository(db)
+	handler := handlers.New(repo, stor, cfg, actionLogRepo)
 
 	router := gin.New()
 	router.Use(logger.Recovery(appLogger))
 	router.Use(logger.RequestLogger(appLogger))
+	router.Use(audit.ContextMiddleware())
 	router.Use(metricsCollector.Middleware())
 
 	routes.Setup(router, handler, cfg, metricsCollector)

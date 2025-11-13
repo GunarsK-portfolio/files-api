@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/GunarsK-portfolio/portfolio-common/audit"
 	commonHandlers "github.com/GunarsK-portfolio/portfolio-common/handlers"
 	"github.com/gin-gonic/gin"
 )
@@ -55,6 +56,16 @@ func (h *Handler) DeleteFile(c *gin.Context) {
 		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to delete file record")
 		return
 	}
+
+	// Log file deletion
+	resourceType := audit.ResourceTypeFile
+	source := "files-api"
+	_ = audit.LogFromContext(c, h.actionLogRepo, audit.ActionFileDelete, &resourceType, &id, &source, map[string]interface{}{
+		"filename":  file.FileName,
+		"file_type": file.FileType,
+		"size":      file.FileSize,
+		"mime_type": file.MimeType,
+	})
 
 	c.JSON(http.StatusOK, gin.H{"message": "file deleted successfully"})
 }

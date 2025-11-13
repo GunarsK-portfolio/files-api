@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/GunarsK-portfolio/portfolio-common/audit"
 	commonHandlers "github.com/GunarsK-portfolio/portfolio-common/handlers"
 	"github.com/GunarsK-portfolio/portfolio-common/logger"
 	"github.com/gin-gonic/gin"
@@ -94,6 +95,16 @@ func (h *Handler) UploadFile(c *gin.Context) {
 		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to create file record")
 		return
 	}
+
+	// Log file upload
+	resourceType := audit.ResourceTypeFile
+	source := "files-api"
+	_ = audit.LogFromContext(c, h.actionLogRepo, audit.ActionFileUpload, &resourceType, &fileRecord.ID, &source, map[string]interface{}{
+		"filename":  fileRecord.FileName,
+		"file_type": fileType,
+		"size":      fileRecord.FileSize,
+		"mime_type": fileRecord.MimeType,
+	})
 
 	// Return file info
 	c.JSON(http.StatusOK, gin.H{
