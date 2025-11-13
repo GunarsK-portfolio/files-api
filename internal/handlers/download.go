@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/GunarsK-portfolio/portfolio-common/audit"
 	commonHandlers "github.com/GunarsK-portfolio/portfolio-common/handlers"
 	"github.com/gin-gonic/gin"
 )
@@ -63,6 +64,20 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 	c.Header("Content-Length", fmt.Sprintf("%d", stat.Size))
 	// Use RFC 5987 encoding for filename to prevent header injection and support non-ASCII characters
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(fileRecord.FileName)))
+
+	// Log file download with source tracking
+	resourceType := audit.ResourceTypeFile
+	source := c.Query("source") // "admin-web", "public-web", or empty
+	var sourcePtr *string
+	if source != "" {
+		sourcePtr = &source
+	}
+	_ = audit.LogFromContext(c, h.actionLogRepo, audit.ActionFileDownload, &resourceType, &fileRecord.ID, sourcePtr, map[string]interface{}{
+		"filename":  fileRecord.FileName,
+		"file_type": fileType,
+		"size":      fileRecord.FileSize,
+		"mime_type": fileRecord.MimeType,
+	})
 
 	// Stream file
 	if _, err := io.Copy(c.Writer, object); err != nil {
