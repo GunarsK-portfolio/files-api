@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	commonHandlers "github.com/GunarsK-portfolio/portfolio-common/handlers"
+	"github.com/GunarsK-portfolio/portfolio-common/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -82,7 +83,14 @@ func (h *Handler) UploadFile(c *gin.Context) {
 	fileRecord, err := h.repo.CreateFile(c.Request.Context(), bucket, key, file.Filename, fileType, file.Size, contentType)
 	if err != nil {
 		// Cleanup S3 file if DB insert fails
-		_ = h.storage.DeleteObject(c.Request.Context(), bucket, key)
+		if cleanupErr := h.storage.DeleteObject(c.Request.Context(), bucket, key); cleanupErr != nil {
+			logger.GetLogger(c).Error("Failed to cleanup S3 file after database error",
+				"error", cleanupErr,
+				"bucket", bucket,
+				"key", key,
+				"original_error", err,
+			)
+		}
 		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "failed to create file record")
 		return
 	}
