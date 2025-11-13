@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	commonHandlers "github.com/GunarsK-portfolio/portfolio-common/handlers"
 	"github.com/gin-gonic/gin"
@@ -60,7 +61,8 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 	// Set headers with original filename
 	c.Header("Content-Type", stat.ContentType)
 	c.Header("Content-Length", fmt.Sprintf("%d", stat.Size))
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileRecord.FileName))
+	// Use RFC 5987 encoding for filename to prevent header injection and support non-ASCII characters
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(fileRecord.FileName)))
 
 	// Stream file
 	if _, err := io.Copy(c.Writer, object); err != nil {
