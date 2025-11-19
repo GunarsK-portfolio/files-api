@@ -39,7 +39,7 @@ func (h *Handler) DeleteFile(c *gin.Context) {
 	}
 
 	// Map fileType to bucket
-	bucket, err := fileTypeToBucket(file.FileType)
+	bucket, err := h.fileTypeToBucket(file.FileType)
 	if err != nil {
 		commonHandlers.LogAndRespondError(c, http.StatusInternalServerError, err, "invalid file type in database")
 		return

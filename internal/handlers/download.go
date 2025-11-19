@@ -31,7 +31,7 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 	}
 
 	// Map fileType to bucket
-	bucket, err := fileTypeToBucket(fileType)
+	bucket, err := h.fileTypeToBucket(fileType)
 	if err != nil {
 		commonHandlers.RespondError(c, http.StatusBadRequest, err.Error())
 		return

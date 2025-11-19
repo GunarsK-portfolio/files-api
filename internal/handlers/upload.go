@@ -128,7 +128,7 @@ func (h *Handler) isAllowedContentType(contentType string) bool {
 
 func (h *Handler) getBucketForFileType(fileType, contentType string) (string, error) {
 	// Get bucket for fileType
-	bucket, err := fileTypeToBucket(fileType)
+	bucket, err := h.fileTypeToBucket(fileType)
 	if err != nil {
 		return "", err
 	}

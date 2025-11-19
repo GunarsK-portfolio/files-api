@@ -77,6 +77,9 @@ S3_ENDPOINT=http://localhost:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
 S3_USE_SSL=false
+S3_IMAGES_BUCKET=images
+S3_DOCUMENTS_BUCKET=documents
+S3_MINIATURES_BUCKET=miniatures
 AUTH_SERVICE_URL=http://localhost:8084/api/v1
 ```
 
@@ -175,11 +178,15 @@ When running, Swagger UI is available at:
 | `DB_USER` | Database user | `portfolio_admin` |
 | `DB_PASSWORD` | Database password | - |
 | `DB_NAME` | Database name | `portfolio` |
-| `S3_ENDPOINT` | MinIO/S3 endpoint | `http://localhost:9000` |
-| `S3_ACCESS_KEY` | MinIO access key | `minioadmin` |
-| `S3_SECRET_KEY` | MinIO secret key | `minioadmin` |
+| `DB_SSLMODE` | PostgreSQL SSL mode | `disable` |
+| `S3_ENDPOINT` | MinIO/S3 endpoint URL | `http://localhost:9000` |
+| `S3_ACCESS_KEY` | MinIO/S3 access key (optional for AWS IAM) | `minioadmin` |
+| `S3_SECRET_KEY` | MinIO/S3 secret key (optional for AWS IAM) | `minioadmin` |
 | `S3_USE_SSL` | Use SSL for S3 | `false` |
-| `AUTH_SERVICE_URL` | Auth service URL | `http://localhost:8084/api/v1` |
+| `S3_IMAGES_BUCKET` | S3 bucket for portfolio images | `images` |
+| `S3_DOCUMENTS_BUCKET` | S3 bucket for documents | `documents` |
+| `S3_MINIATURES_BUCKET` | S3 bucket for miniatures | `miniatures` |
+| `AUTH_SERVICE_URL` | Auth service URL | `http://localhost:8084` |
 | `MAX_FILE_SIZE` | Max upload size (bytes) | `10485760` (10MB) |
 | `ALLOWED_FILE_TYPES` | Allowed MIME types | (see docs for full list) |
 

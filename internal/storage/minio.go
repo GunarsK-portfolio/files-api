@@ -20,8 +20,20 @@ func New(cfg *config.Config) (*Storage, error) {
 	endpoint := strings.TrimPrefix(cfg.S3Config.Endpoint, "http://")
 	endpoint = strings.TrimPrefix(endpoint, "https://")
 
+	// Choose credentials provider based on configuration
+	// If AccessKey/SecretKey are provided (MinIO/local dev), use static credentials
+	// If empty (AWS production), use IAM role credentials chain
+	var creds *credentials.Credentials
+	if cfg.S3Config.AccessKey != "" && cfg.S3Config.SecretKey != "" {
+		// Local development with MinIO - use static credentials
+		creds = credentials.NewStaticV4(cfg.S3Config.AccessKey, cfg.S3Config.SecretKey, "")
+	} else {
+		// AWS production - use IAM role credentials (ECS task role, EC2 instance profile, etc.)
+		creds = credentials.NewIAM("")
+	}
+
 	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.S3Config.AccessKey, cfg.S3Config.SecretKey, ""),
+		Creds:  creds,
 		Secure: cfg.S3Config.UseSSL,
 	})
 	if err != nil {
