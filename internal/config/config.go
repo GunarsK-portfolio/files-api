@@ -15,7 +15,7 @@ type Config struct {
 	common.DatabaseConfig
 	common.ServiceConfig
 	common.S3Config
-	AuthServiceURL   string   `validate:"required,url"`
+	JWTSecret        string   `validate:"required,min=32"`
 	MaxFileSize      int64    `validate:"gt=0"`
 	AllowedFileTypes []string `validate:"required,min=1,dive,required"`
 }
@@ -37,7 +37,7 @@ func Load() *Config {
 		DatabaseConfig:   common.NewDatabaseConfig(),
 		ServiceConfig:    common.NewServiceConfig("8085"),
 		S3Config:         common.NewS3Config(),
-		AuthServiceURL:   common.GetEnvRequired("AUTH_SERVICE_URL"),
+		JWTSecret:        common.GetEnvRequired("JWT_SECRET"),
 		MaxFileSize:      maxFileSize,
 		AllowedFileTypes: allowedTypes,
 	}
