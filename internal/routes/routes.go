@@ -1,8 +1,12 @@
 package routes
 
 import (
+	"log"
+
+	"github.com/GunarsK-portfolio/files-api/docs"
 	"github.com/GunarsK-portfolio/files-api/internal/config"
 	"github.com/GunarsK-portfolio/files-api/internal/handlers"
+	"github.com/GunarsK-portfolio/portfolio-common/jwt"
 	"github.com/GunarsK-portfolio/portfolio-common/metrics"
 	common "github.com/GunarsK-portfolio/portfolio-common/middleware"
 	"github.com/gin-gonic/gin"
@@ -33,7 +37,11 @@ func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config, me
 		v1.GET("/files/:fileType/*key", handler.DownloadFile)
 
 		// Protected routes (JWT required)
-		authMiddleware := common.NewAuthMiddleware(cfg.AuthServiceURL)
+		jwtService, err := jwt.NewValidatorOnly(cfg.JWTSecret)
+		if err != nil {
+			log.Fatalf("Failed to create JWT service: %v", err)
+		}
+		authMiddleware := common.NewAuthMiddleware(jwtService)
 		protected := v1.Group("/")
 		protected.Use(authMiddleware.ValidateToken())
 		{
@@ -42,6 +50,9 @@ func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config, me
 		}
 	}
 
-	// Swagger documentation
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// Swagger documentation (only if SWAGGER_HOST is configured)
+	if cfg.SwaggerHost != "" {
+		docs.SwaggerInfo.Host = cfg.SwaggerHost
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 }
