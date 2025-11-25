@@ -627,6 +627,8 @@ func TestNew_ReturnsHandler(t *testing.T) {
 // Context Propagation Tests
 // =============================================================================
 
+type ctxKey struct{}
+
 func TestDeleteFile_ContextPropagation(t *testing.T) {
 	var capturedCtx context.Context
 	testFile := createTestFile()
@@ -641,7 +643,16 @@ func TestDeleteFile_ContextPropagation(t *testing.T) {
 		},
 	}
 
-	router := setupTestRouter()
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+
+	// Add middleware that injects a sentinel value into the context
+	router.Use(func(c *gin.Context) {
+		ctx := context.WithValue(c.Request.Context(), ctxKey{}, "test-marker")
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	})
+
 	router.DELETE("/api/v1/files/:id", func(c *gin.Context) {
 		// Get file from repo to trigger context capture
 		_, _ = mockRepo.GetFileByID(c.Request.Context(), 1)
@@ -656,6 +667,11 @@ func TestDeleteFile_ContextPropagation(t *testing.T) {
 
 	if capturedCtx == nil {
 		t.Error("expected context to be propagated to repository")
+	}
+
+	// Verify the sentinel value was propagated through
+	if capturedCtx.Value(ctxKey{}) != "test-marker" {
+		t.Error("context sentinel value was not propagated to repository")
 	}
 }
 
@@ -672,7 +688,16 @@ func TestDownloadFile_ContextPropagation(t *testing.T) {
 	cfg := createTestConfig()
 	handler := New(mockRepo, nil, cfg, &mockActionLogRepo{})
 
-	router := setupTestRouter()
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+
+	// Add middleware that injects a sentinel value into the context
+	router.Use(func(c *gin.Context) {
+		ctx := context.WithValue(c.Request.Context(), ctxKey{}, "test-marker")
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	})
+
 	router.GET("/api/v1/files/:fileType/*key", handler.DownloadFile)
 
 	w := performRequest(router, http.MethodGet, "/api/v1/files/portfolio-image/test.png", nil)
@@ -684,5 +709,10 @@ func TestDownloadFile_ContextPropagation(t *testing.T) {
 
 	if capturedCtx == nil {
 		t.Error("expected context to be propagated to repository")
+	}
+
+	// Verify the sentinel value was propagated through
+	if capturedCtx.Value(ctxKey{}) != "test-marker" {
+		t.Error("context sentinel value was not propagated to repository")
 	}
 }

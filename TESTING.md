@@ -22,13 +22,13 @@ go tool cover -html=coverage.out -o coverage.html
 go test -v -run TestUploadFile_MissingFile ./internal/handlers/
 
 # Run all Delete tests
-go test -v -run TestDeleteFile ./internal/handlers/
+go test -v -run DeleteFile ./internal/handlers/
 
 # Run all Download tests
-go test -v -run TestDownloadFile ./internal/handlers/
+go test -v -run DownloadFile ./internal/handlers/
 
 # Run all Upload tests
-go test -v -run TestUploadFile ./internal/handlers/
+go test -v -run UploadFile ./internal/handlers/
 ```
 
 ## Test Files
@@ -45,7 +45,7 @@ go test -v -run TestUploadFile ./internal/handlers/
 | Download File | 3 | Download + error cases |
 | Upload File | 4 | Upload validation |
 | Constructor | 1 | Handler initialization |
-| Context Propagation | 2 | Verifies context passed to repository |
+| Context Propagation | 2 | Verifies context with sentinel value |
 
 ## Key Testing Patterns
 
