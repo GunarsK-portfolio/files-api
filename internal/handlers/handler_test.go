@@ -17,6 +17,7 @@ import (
 	commonConfig "github.com/GunarsK-portfolio/portfolio-common/config"
 	commonRepo "github.com/GunarsK-portfolio/portfolio-common/repository"
 	"github.com/gin-gonic/gin"
+	"github.com/minio/minio-go/v7"
 	"gorm.io/gorm"
 )
 
@@ -74,6 +75,45 @@ func (m *mockRepository) DeleteFile(ctx context.Context, id int64) error {
 		return m.deleteFileFunc(ctx, id)
 	}
 	return nil
+}
+
+// =============================================================================
+// Mock Storage
+// =============================================================================
+
+type mockStorage struct {
+	getObjectFunc    func(ctx context.Context, bucket, key string) (*minio.Object, error)
+	putObjectFunc    func(ctx context.Context, bucket, key string, reader io.Reader, size int64, contentType string) error
+	deleteObjectFunc func(ctx context.Context, bucket, key string) error
+	statObjectFunc   func(ctx context.Context, bucket, key string) (minio.ObjectInfo, error)
+}
+
+func (m *mockStorage) GetObject(ctx context.Context, bucket, key string) (*minio.Object, error) {
+	if m.getObjectFunc != nil {
+		return m.getObjectFunc(ctx, bucket, key)
+	}
+	return nil, nil
+}
+
+func (m *mockStorage) PutObject(ctx context.Context, bucket, key string, reader io.Reader, size int64, contentType string) error {
+	if m.putObjectFunc != nil {
+		return m.putObjectFunc(ctx, bucket, key, reader, size, contentType)
+	}
+	return nil
+}
+
+func (m *mockStorage) DeleteObject(ctx context.Context, bucket, key string) error {
+	if m.deleteObjectFunc != nil {
+		return m.deleteObjectFunc(ctx, bucket, key)
+	}
+	return nil
+}
+
+func (m *mockStorage) StatObject(ctx context.Context, bucket, key string) (minio.ObjectInfo, error) {
+	if m.statObjectFunc != nil {
+		return m.statObjectFunc(ctx, bucket, key)
+	}
+	return minio.ObjectInfo{}, nil
 }
 
 // =============================================================================
@@ -172,35 +212,55 @@ func TestHealthCheck_Success(t *testing.T) {
 
 func TestDeleteFile_Success(t *testing.T) {
 	testFile := createTestFile()
+	var deletedBucket, deletedKey string
+	var repoDeleteCalled bool
+
 	mockRepo := &mockRepository{
 		getFileByIDFunc: func(_ context.Context, _ int64) (*repository.StorageFile, error) {
 			return testFile, nil
 		},
 		deleteFileFunc: func(_ context.Context, _ int64) error {
+			repoDeleteCalled = true
 			return nil
 		},
 	}
 
-	// Create handler with storage delete capability
+	mockStore := &mockStorage{
+		deleteObjectFunc: func(_ context.Context, bucket, key string) error {
+			deletedBucket = bucket
+			deletedKey = key
+			return nil
+		},
+	}
+
+	cfg := createTestConfig()
+	handler := New(mockRepo, mockStore, cfg, &mockActionLogRepo{})
+
 	router := setupTestRouter()
-	router.DELETE("/api/v1/files/:id", func(c *gin.Context) {
-		// Manually call the delete logic with mock storage
-		idStr := c.Param("id")
-		if idStr != "1" {
-			t.Errorf("expected id '1', got '%s'", idStr)
-		}
-
-		// Use mock repo to verify it would be called
-		_, _ = mockRepo.GetFileByID(c.Request.Context(), 1)
-
-		// Simulate successful delete
-		c.JSON(http.StatusOK, gin.H{"message": "file deleted successfully"})
-	})
+	router.DELETE("/api/v1/files/:id", handler.DeleteFile)
 
 	w := performRequest(router, http.MethodDelete, "/api/v1/files/1", nil)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	// Verify storage was called with correct parameters
+	if deletedBucket != testImagesBucket {
+		t.Errorf("expected bucket %s, got %s", testImagesBucket, deletedBucket)
+	}
+	if deletedKey != testFileKey {
+		t.Errorf("expected key %s, got %s", testFileKey, deletedKey)
+	}
+
+	// Verify repository delete was called
+	if !repoDeleteCalled {
+		t.Error("expected repository DeleteFile to be called")
+	}
+
+	// Verify response message
+	if !strings.Contains(w.Body.String(), "file deleted successfully") {
+		t.Errorf("expected success message, got %s", w.Body.String())
 	}
 }
 
@@ -643,6 +703,15 @@ func TestDeleteFile_ContextPropagation(t *testing.T) {
 		},
 	}
 
+	mockStore := &mockStorage{
+		deleteObjectFunc: func(_ context.Context, _, _ string) error {
+			return nil
+		},
+	}
+
+	cfg := createTestConfig()
+	handler := New(mockRepo, mockStore, cfg, &mockActionLogRepo{})
+
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 
@@ -653,11 +722,7 @@ func TestDeleteFile_ContextPropagation(t *testing.T) {
 		c.Next()
 	})
 
-	router.DELETE("/api/v1/files/:id", func(c *gin.Context) {
-		// Get file from repo to trigger context capture
-		_, _ = mockRepo.GetFileByID(c.Request.Context(), 1)
-		c.JSON(http.StatusOK, gin.H{"message": "ok"})
-	})
+	router.DELETE("/api/v1/files/:id", handler.DeleteFile)
 
 	w := performRequest(router, http.MethodDelete, "/api/v1/files/1", nil)
 

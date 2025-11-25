@@ -119,13 +119,23 @@ File types:
 
 ## Storage Layer
 
-The storage layer (`*storage.Storage`) uses the MinIO client directly. Testing
-file upload success paths that involve actual S3 operations requires either:
+The storage layer uses the `storage.ObjectStore` interface, which enables
+mocking for unit tests. The concrete implementation (`*storage.Storage`) uses
+the MinIO client.
 
-- Integration tests with a real MinIO instance
-- A storage interface abstraction for full mock capability
+**Mock Storage**: Function fields allow per-test S3 behavior customization
 
-Current tests cover validation, error handling, and repository interactions.
+```go
+mockStore := &mockStorage{
+    deleteObjectFunc: func(ctx context.Context, bucket, key string) error {
+        return nil
+    },
+}
+handler := New(mockRepo, mockStore, cfg, &mockActionLogRepo{})
+```
+
+Tests cover S3 deletion, validation, error handling, and repository interactions.
+Upload success paths require integration tests with a real MinIO instance.
 
 ## Contributing Tests
 
