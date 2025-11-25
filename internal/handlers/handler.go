@@ -9,12 +9,12 @@ import (
 
 type Handler struct {
 	repo          repository.Repository
-	storage       *storage.Storage
+	storage       storage.ObjectStore
 	cfg           *config.Config
 	actionLogRepo commonrepo.ActionLogRepository
 }
 
-func New(repo repository.Repository, storage *storage.Storage, cfg *config.Config, actionLogRepo commonrepo.ActionLogRepository) *Handler {
+func New(repo repository.Repository, storage storage.ObjectStore, cfg *config.Config, actionLogRepo commonrepo.ActionLogRepository) *Handler {
 	return &Handler{
 		repo:          repo,
 		storage:       storage,

@@ -10,9 +10,22 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
+// ObjectStore defines the interface for object storage operations.
+// This interface enables mocking for unit tests.
+type ObjectStore interface {
+	GetObject(ctx context.Context, bucket, key string) (*minio.Object, error)
+	PutObject(ctx context.Context, bucket, key string, reader io.Reader, size int64, contentType string) error
+	DeleteObject(ctx context.Context, bucket, key string) error
+	StatObject(ctx context.Context, bucket, key string) (minio.ObjectInfo, error)
+}
+
+// Storage implements ObjectStore using MinIO client.
 type Storage struct {
 	client *minio.Client
 }
+
+// Compile-time check that Storage implements ObjectStore.
+var _ ObjectStore = (*Storage)(nil)
 
 //nolint:staticcheck // Embedded field name required for clarity
 func New(cfg *config.Config) (*Storage, error) {
