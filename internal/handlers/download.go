@@ -68,11 +68,10 @@ func (h *Handler) DownloadFile(c *gin.Context) {
 	// Log file download with source tracking
 	resourceType := audit.ResourceTypeFile
 	source := c.Query("source") // "admin-web", "public-web", or empty
-	var sourcePtr *string
-	if source != "" {
-		sourcePtr = &source
+	if source == "" {
+		source = "files-api" // Default source when not provided
 	}
-	_ = audit.LogFromContext(c, h.actionLogRepo, audit.ActionFileDownload, &resourceType, &fileRecord.ID, sourcePtr, map[string]interface{}{
+	_ = audit.LogFromContext(c, h.actionLogRepo, audit.ActionFileDownload, &resourceType, &fileRecord.ID, &source, map[string]interface{}{
 		"filename":  fileRecord.FileName,
 		"file_type": fileType,
 		"size":      fileRecord.FileSize,
