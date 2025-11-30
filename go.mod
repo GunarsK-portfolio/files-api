@@ -3,7 +3,7 @@ module github.com/GunarsK-portfolio/files-api
 go 1.25.3
 
 require (
-	github.com/GunarsK-portfolio/portfolio-common v0.23.0
+	github.com/GunarsK-portfolio/portfolio-common v0.29.0
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/google/uuid v1.6.0
