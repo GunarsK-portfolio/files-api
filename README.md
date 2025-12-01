@@ -3,7 +3,7 @@
 ![CI](https://github.com/GunarsK-portfolio/files-api/workflows/CI/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/GunarsK-portfolio/files-api)](https://goreportcard.com/report/github.com/GunarsK-portfolio/files-api)
 [![codecov](https://codecov.io/gh/GunarsK-portfolio/files-api/graph/badge.svg?token=3O8BMJ1K1B)](https://codecov.io/gh/GunarsK-portfolio/files-api)
-[![CodeRabbit](https://img.shields.io/coderabbit/prs/github/GunarsK-portfolio/files-api?label=CodeRabbit&color=FF570A)](https://coderabbit.ai)
+[![CodeRabbit](https://img.shields.io/coderabbit/prs/github/GunarsK-portfolio/files-api?label=CodeRabbit&color=2ea44f)](https://coderabbit.ai)
 
 File upload/download service for portfolio platform.
 
