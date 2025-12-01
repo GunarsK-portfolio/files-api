@@ -2,7 +2,8 @@
 
 ![CI](https://github.com/GunarsK-portfolio/files-api/workflows/CI/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/GunarsK-portfolio/files-api)](https://goreportcard.com/report/github.com/GunarsK-portfolio/files-api)
-[![codecov](https://codecov.io/gh/GunarsK-portfolio/files-api/branch/main/graph/badge.svg)](https://codecov.io/gh/GunarsK-portfolio/files-api)
+[![codecov](https://codecov.io/gh/GunarsK-portfolio/files-api/graph/badge.svg?token=3O8BMJ1K1B)](https://codecov.io/gh/GunarsK-portfolio/files-api)
+[![CodeRabbit](https://img.shields.io/coderabbit/prs/github/GunarsK-portfolio/files-api?label=CodeRabbit&color=FF570A)](https://coderabbit.ai)
 
 File upload/download service for portfolio platform.
 
@@ -197,4 +198,4 @@ public-api for file URLs.
 
 ## License
 
-Part of the GunarsK Portfolio platform.
+[MIT](LICENSE)
