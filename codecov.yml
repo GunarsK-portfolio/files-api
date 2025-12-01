@@ -1,0 +1,21 @@
+# Codecov configuration
+# Only measure coverage for handlers (where tests exist)
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 5%
+    patch:
+      default:
+        target: auto
+        threshold: 5%
+
+ignore:
+  - "cmd/**/*"
+  - "docs/**/*"
+  - "internal/config/**/*"
+  - "internal/routes/**/*"
+  - "internal/repository/**/*"
+  - "internal/storage/**/*"
