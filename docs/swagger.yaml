@@ -137,21 +137,6 @@ paths:
       summary: Delete file from S3 and database
       tags:
       - files
-  /health:
-    get:
-      description: Check if service is healthy
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Health check
-      tags:
-      - health
 securityDefinitions:
   BearerAuth:
     in: header
