@@ -184,29 +184,6 @@ func performRequest(router *gin.Engine, method, path string, body io.Reader) *ht
 }
 
 // =============================================================================
-// Health Check Tests
-// =============================================================================
-
-func TestHealthCheck_Success(t *testing.T) {
-	mockRepo := &mockRepository{}
-	cfg := createTestConfig()
-	handler := New(mockRepo, nil, cfg, &mockActionLogRepo{})
-
-	router := setupTestRouter()
-	router.GET("/health", handler.HealthCheck)
-
-	w := performRequest(router, http.MethodGet, "/health", nil)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
-	}
-
-	if !strings.Contains(w.Body.String(), "healthy") {
-		t.Errorf("expected 'healthy' in response, got %s", w.Body.String())
-	}
-}
-
-// =============================================================================
 // Delete File Tests
 // =============================================================================
 

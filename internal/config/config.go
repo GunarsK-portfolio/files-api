@@ -35,7 +35,7 @@ func Load() *Config {
 
 	cfg := &Config{
 		DatabaseConfig:   common.NewDatabaseConfig(),
-		ServiceConfig:    common.NewServiceConfig("8085"),
+		ServiceConfig:    common.NewServiceConfig(8085),
 		S3Config:         common.NewS3Config(),
 		JWTSecret:        common.GetEnvRequired("JWT_SECRET"),
 		MaxFileSize:      maxFileSize,

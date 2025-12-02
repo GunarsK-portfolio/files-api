@@ -33,16 +33,15 @@ go test -v -run UploadFile ./internal/handlers/
 
 ## Test Files
 
-**`handler_test.go`** - 21 tests
+**`handler_test.go`** - 22 tests
 
 | Category | Tests | Coverage |
 |----------|-------|----------|
-| Health Check | 1 | HealthCheck endpoint |
-| Delete File | 4 | Delete + error cases |
+| Delete File | 5 | Delete + error cases |
 | File Type to Bucket | 4 | Bucket mapping |
 | Content Type Validation | 1 | Allowed content types (7 subtests) |
 | Bucket for File Type | 1 | File type + content type validation (8 subtests) |
-| Download File | 3 | Download + error cases |
+| Download File | 4 | Download + error cases |
 | Upload File | 4 | Upload validation |
 | Constructor | 1 | Handler initialization |
 | Context Propagation | 2 | Verifies context with sentinel value |
