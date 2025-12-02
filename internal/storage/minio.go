@@ -76,3 +76,8 @@ func (s *Storage) DeleteObject(ctx context.Context, bucket, key string) error {
 func (s *Storage) StatObject(ctx context.Context, bucket, key string) (minio.ObjectInfo, error) {
 	return s.client.StatObject(ctx, bucket, key, minio.StatObjectOptions{})
 }
+
+// Client returns the underlying MinIO client for health checks.
+func (s *Storage) Client() *minio.Client {
+	return s.client
+}
