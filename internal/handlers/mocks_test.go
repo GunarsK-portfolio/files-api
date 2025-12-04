@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"io"
+	"mime/multipart"
+	"net/http"
 	"net/http/httptest"
 	"time"
 
@@ -171,9 +174,47 @@ func createTestFile() *repository.StorageFile {
 	}
 }
 
-func performRequest(router *gin.Engine, method, path string, body io.Reader) *httptest.ResponseRecorder {
+func performRequest(router *gin.Engine, method, path string, body io.Reader, headers ...map[string]string) *httptest.ResponseRecorder {
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(method, path, body)
+	if len(headers) > 0 {
+		for key, value := range headers[0] {
+			req.Header.Set(key, value)
+		}
+	}
 	router.ServeHTTP(w, req)
 	return w
+}
+
+// createMultipartRequest creates a multipart form request for file upload testing.
+// Returns the request and recorder, or an error if request creation fails.
+func createMultipartRequest(filename, contentType, fileType string, fileContent []byte) (*http.Request, *httptest.ResponseRecorder, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// Create file part with custom headers
+	h := make(map[string][]string)
+	h["Content-Disposition"] = []string{`form-data; name="file"; filename="` + filename + `"`}
+	h["Content-Type"] = []string{contentType}
+	part, err := writer.CreatePart(h)
+	if err != nil {
+		return nil, nil, err
+	}
+	if _, err := part.Write(fileContent); err != nil {
+		return nil, nil, err
+	}
+
+	// Add fileType field
+	if err := writer.WriteField("fileType", fileType); err != nil {
+		return nil, nil, err
+	}
+	if err := writer.Close(); err != nil {
+		return nil, nil, err
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/files", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	w := httptest.NewRecorder()
+
+	return req, w, nil
 }

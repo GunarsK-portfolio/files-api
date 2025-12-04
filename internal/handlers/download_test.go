@@ -102,6 +102,38 @@ func TestDownloadFile_StorageGetObjectError(t *testing.T) {
 	}
 }
 
+func TestDownloadFile_PathTraversalAttempt(t *testing.T) {
+	// Test that path traversal attempts are rejected with appropriate error codes.
+	// Defense-in-depth: even though keys containing ".." pass to repository,
+	// they won't match any database records since keys are server-generated UUIDs.
+	mockRepo := &mockRepository{
+		getFileByKeyFunc: func(_ context.Context, _, _ string) (*repository.StorageFile, error) {
+			// Any traversal attempt won't match a valid UUID key in the database
+			return nil, gorm.ErrRecordNotFound
+		},
+	}
+	cfg := createTestConfig()
+	handler := New(mockRepo, nil, cfg, &mockActionLogRepo{})
+
+	router := setupTestRouter()
+	router.GET("/api/v1/files/:fileType/*key", handler.DownloadFile)
+
+	// Test path traversal attempts - these should be rejected (400 or 404)
+	traversalPaths := []string{
+		"/api/v1/files/portfolio-image/../../../etc/passwd",
+		"/api/v1/files/portfolio-image/test/../../../secret.txt",
+		"/api/v1/files/portfolio-image/..%2F..%2Fetc%2Fpasswd",
+	}
+
+	for _, path := range traversalPaths {
+		w := performRequest(router, http.MethodGet, path, nil)
+		// Should return 400 (bad request) or 404 (not found), not 200
+		if w.Code != http.StatusBadRequest && w.Code != http.StatusNotFound {
+			t.Errorf("path traversal attempt should be blocked: %s returned %d", path, w.Code)
+		}
+	}
+}
+
 func TestDownloadFile_ContextPropagation(t *testing.T) {
 	var capturedCtx context.Context
 

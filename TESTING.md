@@ -33,12 +33,12 @@ go test -v -run UploadFile ./internal/handlers/
 
 ## Test Files
 
-**Handler tests** - 34 tests (81.0% coverage)
+**Handler tests** - 35 tests (81.0% coverage)
 
 | File | Tests | Coverage |
 | ---- | ----- | -------- |
 | `delete_test.go` | 7 | Success, invalid ID, not found, errors, context |
-| `download_test.go` | 5 | Invalid type, not found, DB error, storage, context |
+| `download_test.go` | 6 | Invalid type, not found, errors, traversal |
 | `upload_test.go` | 14 | Success, validation, S3/DB errors, cleanup, documents |
 | `handler_test.go` | 8 | Bucket mapping, content types, constructor |
 
@@ -60,9 +60,24 @@ mockRepo := &mockRepository{
 path := "/api/v1/files/portfolio-image/test.png"
 w := performRequest(router, http.MethodGet, path, nil)
 if w.Code != http.StatusOK { ... }
+
+// With custom headers
+headers := map[string]string{"Authorization": "Bearer token"}
+w := performRequest(router, http.MethodGet, path, nil, headers)
 ```
 
-**Multipart Upload Testing**: Creates multipart form data for uploads
+**Multipart Upload Testing**: Use the `createMultipartRequest` helper
+
+```go
+req, w, err := createMultipartRequest(
+    "test.png", "image/png", "portfolio-image", []byte("data"))
+if err != nil {
+    t.Fatalf("failed to create multipart request: %v", err)
+}
+router.ServeHTTP(w, req)
+```
+
+For edge cases requiring custom multipart structure (missing fields, oversized files):
 
 ```go
 body := &bytes.Buffer{}
@@ -99,6 +114,7 @@ file := createTestFile()
 - Invalid file type (400 Bad Request)
 - S3 storage errors (500 Internal Server Error)
 - Database errors with S3 cleanup verification
+- Path traversal attempts (400/404 rejection)
 
 ## API Characteristics
 
@@ -136,8 +152,21 @@ and repository interactions. The upload success path is fully tested with mocks.
 
 ## Contributing Tests
 
-1. Follow naming: `Test<HandlerName>_<Scenario>`
+1. Follow naming: `Test<HandlerName>_<Scenario>` or `Test<HandlerName>_<Condition>_<ExpectedBehavior>`
 2. Organize by endpoint with section markers
 3. Mock only the repository methods needed
-4. Check error return values in test setup
-5. Verify: `go test -cover ./internal/handlers/`
+4. Use `createMultipartRequest` helper for upload tests
+5. Check error return values in test setup
+6. Verify: `go test -cover ./internal/handlers/`
+
+## Test Helper Functions
+
+Located in `mocks_test.go`:
+
+| Helper | Purpose |
+| ------ | ------- |
+| `setupTestRouter()` | Creates Gin router in test mode |
+| `createTestConfig()` | Creates config with test bucket names |
+| `createTestFile()` | Creates sample StorageFile struct |
+| `performRequest(...)` | Executes HTTP request with optional headers |
+| `createMultipartRequest(...)` | Creates multipart upload request |

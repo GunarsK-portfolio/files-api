@@ -168,8 +168,9 @@ func TestUploadFile_InvalidContentType(t *testing.T) {
 // =============================================================================
 
 func TestUploadFile_Success(t *testing.T) {
-	var uploadedBucket, uploadedKey, uploadedContentType string
-	var uploadedSize int64
+	var s3Bucket, s3Key, s3ContentType string
+	var s3Size int64
+	var dbBucket, dbKey string
 	var dbCreateCalled bool
 
 	createdFile := &repository.StorageFile{
@@ -185,6 +186,8 @@ func TestUploadFile_Success(t *testing.T) {
 	mockRepo := &mockRepository{
 		createFileFunc: func(_ context.Context, bucket, key, fileName, fileType string, fileSize int64, mimeType string) (*repository.StorageFile, error) {
 			dbCreateCalled = true
+			dbBucket = bucket
+			dbKey = key
 			createdFile.S3Key = key
 			return createdFile, nil
 		},
@@ -192,10 +195,10 @@ func TestUploadFile_Success(t *testing.T) {
 
 	mockStore := &mockStorage{
 		putObjectFunc: func(_ context.Context, bucket, key string, _ io.Reader, size int64, contentType string) error {
-			uploadedBucket = bucket
-			uploadedKey = key
-			uploadedSize = size
-			uploadedContentType = contentType
+			s3Bucket = bucket
+			s3Key = key
+			s3Size = size
+			s3ContentType = contentType
 			return nil
 		},
 	}
@@ -237,23 +240,35 @@ func TestUploadFile_Success(t *testing.T) {
 		t.Errorf("expected status %d, got %d: %s", http.StatusOK, w.Code, w.Body.String())
 	}
 
-	// Verify storage was called
-	if uploadedBucket != testImagesBucket {
-		t.Errorf("expected bucket %s, got %s", testImagesBucket, uploadedBucket)
+	// Verify storage was called with correct parameters
+	if s3Bucket != testImagesBucket {
+		t.Errorf("expected S3 bucket %s, got %s", testImagesBucket, s3Bucket)
 	}
-	if uploadedKey == "" {
-		t.Error("expected key to be generated")
+	if s3Key == "" {
+		t.Error("expected S3 key to be generated")
 	}
-	if uploadedSize != 13 { // "fake png data" is 13 bytes
-		t.Errorf("expected size 13, got %d", uploadedSize)
+	// Key should be server-generated UUID, not the client filename
+	if s3Key == "test-upload.png" {
+		t.Error("S3 key should be server-generated UUID, not client filename")
 	}
-	if uploadedContentType != "image/png" {
-		t.Errorf("expected content type image/png, got %s", uploadedContentType)
+	if s3Size != 13 { // "fake png data" is 13 bytes
+		t.Errorf("expected S3 size 13, got %d", s3Size)
+	}
+	if s3ContentType != "image/png" {
+		t.Errorf("expected S3 content type image/png, got %s", s3ContentType)
 	}
 
 	// Verify database was called
 	if !dbCreateCalled {
 		t.Error("expected repository CreateFile to be called")
+	}
+
+	// Verify S3 and DB received the same bucket/key (consistency check)
+	if dbBucket != s3Bucket {
+		t.Errorf("S3 bucket (%s) and DB bucket (%s) should match", s3Bucket, dbBucket)
+	}
+	if dbKey != s3Key {
+		t.Errorf("S3 key (%s) and DB key (%s) should match", s3Key, dbKey)
 	}
 
 	// Verify response contains file info
@@ -280,20 +295,10 @@ func TestUploadFile_S3Error(t *testing.T) {
 	router := setupTestRouter()
 	router.POST("/api/v1/files", handler.UploadFile)
 
-	// Create multipart request
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	h := make(map[string][]string)
-	h["Content-Disposition"] = []string{`form-data; name="file"; filename="test.png"`}
-	h["Content-Type"] = []string{"image/png"}
-	part, _ := writer.CreatePart(h)
-	_, _ = part.Write([]byte("data"))
-	_ = writer.WriteField("fileType", "portfolio-image")
-	_ = writer.Close()
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/files", body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	w := httptest.NewRecorder()
+	req, w, err := createMultipartRequest("test.png", "image/png", "portfolio-image", []byte("data"))
+	if err != nil {
+		t.Fatalf("failed to create multipart request: %v", err)
+	}
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusInternalServerError {
@@ -305,7 +310,7 @@ func TestUploadFile_S3Error(t *testing.T) {
 	}
 }
 
-func TestUploadFile_DBErrorWithS3Cleanup(t *testing.T) {
+func TestUploadFile_DBError_CleansUpS3Object(t *testing.T) {
 	var s3CleanupCalled bool
 	var cleanupBucket, cleanupKey string
 
@@ -333,20 +338,10 @@ func TestUploadFile_DBErrorWithS3Cleanup(t *testing.T) {
 	router := setupTestRouter()
 	router.POST("/api/v1/files", handler.UploadFile)
 
-	// Create multipart request
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	h := make(map[string][]string)
-	h["Content-Disposition"] = []string{`form-data; name="file"; filename="test.png"`}
-	h["Content-Type"] = []string{"image/png"}
-	part, _ := writer.CreatePart(h)
-	_, _ = part.Write([]byte("data"))
-	_ = writer.WriteField("fileType", "portfolio-image")
-	_ = writer.Close()
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/files", body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	w := httptest.NewRecorder()
+	req, w, err := createMultipartRequest("test.png", "image/png", "portfolio-image", []byte("data"))
+	if err != nil {
+		t.Fatalf("failed to create multipart request: %v", err)
+	}
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusInternalServerError {
@@ -501,7 +496,7 @@ func TestUploadFile_InvalidFileTypeForDocument(t *testing.T) {
 	}
 }
 
-func TestUploadFile_DBErrorWithS3CleanupFailure(t *testing.T) {
+func TestUploadFile_DBError_S3CleanupFailure_ReturnsOriginalError(t *testing.T) {
 	// Test that cleanup failure is logged but doesn't change the response
 	var s3CleanupCalled bool
 
@@ -527,19 +522,10 @@ func TestUploadFile_DBErrorWithS3CleanupFailure(t *testing.T) {
 	router := setupTestRouter()
 	router.POST("/api/v1/files", handler.UploadFile)
 
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	h := make(map[string][]string)
-	h["Content-Disposition"] = []string{`form-data; name="file"; filename="test.png"`}
-	h["Content-Type"] = []string{"image/png"}
-	part, _ := writer.CreatePart(h)
-	_, _ = part.Write([]byte("data"))
-	_ = writer.WriteField("fileType", "portfolio-image")
-	_ = writer.Close()
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/files", body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	w := httptest.NewRecorder()
+	req, w, err := createMultipartRequest("test.png", "image/png", "portfolio-image", []byte("data"))
+	if err != nil {
+		t.Fatalf("failed to create multipart request: %v", err)
+	}
 	router.ServeHTTP(w, req)
 
 	// Should still return 500 for the original DB error
@@ -591,19 +577,10 @@ func TestUploadFile_MiniatureImage(t *testing.T) {
 	router := setupTestRouter()
 	router.POST("/api/v1/files", handler.UploadFile)
 
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	h := make(map[string][]string)
-	h["Content-Disposition"] = []string{`form-data; name="file"; filename="miniature.png"`}
-	h["Content-Type"] = []string{"image/png"}
-	part, _ := writer.CreatePart(h)
-	_, _ = part.Write([]byte("png data"))
-	_ = writer.WriteField("fileType", "miniature-image")
-	_ = writer.Close()
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/files", body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	w := httptest.NewRecorder()
+	req, w, err := createMultipartRequest("miniature.png", "image/png", "miniature-image", []byte("png data"))
+	if err != nil {
+		t.Fatalf("failed to create multipart request: %v", err)
+	}
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
