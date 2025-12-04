@@ -33,14 +33,14 @@ go test -v -run UploadFile ./internal/handlers/
 
 ## Test Files
 
-**Handler tests** - 35 tests (81.0% coverage)
+**Handler tests** - 35 tests
 
 | File | Tests | Coverage |
 | ---- | ----- | -------- |
 | `delete_test.go` | 7 | Success, invalid ID, not found, errors, context |
 | `download_test.go` | 6 | Invalid type, not found, errors, traversal |
-| `upload_test.go` | 14 | Success, validation, S3/DB errors, cleanup, documents |
-| `handler_test.go` | 8 | Bucket mapping, content types, constructor |
+| `upload_test.go` | 15 | Success, validation, S3/DB errors, cleanup, hostiles |
+| `handler_test.go` | 7 | Bucket mapping, content types, constructor |
 
 ## Key Testing Patterns
 

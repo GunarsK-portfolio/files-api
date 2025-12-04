@@ -281,8 +281,15 @@ func TestUploadFile_Success(t *testing.T) {
 // Upload File Error Tests
 // =============================================================================
 
-func TestUploadFile_S3Error(t *testing.T) {
-	mockRepo := &mockRepository{}
+func TestUploadFile_S3Error_DBNotTouched(t *testing.T) {
+	var dbCreateCalled bool
+
+	mockRepo := &mockRepository{
+		createFileFunc: func(_ context.Context, _, _, _, _ string, _ int64, _ string) (*repository.StorageFile, error) {
+			dbCreateCalled = true
+			return nil, nil
+		},
+	}
 	mockStore := &mockStorage{
 		putObjectFunc: func(_ context.Context, _, _ string, _ io.Reader, _ int64, _ string) error {
 			return errors.New("S3 connection error")
@@ -307,6 +314,11 @@ func TestUploadFile_S3Error(t *testing.T) {
 
 	if !strings.Contains(w.Body.String(), "failed to upload file") {
 		t.Errorf("expected 'failed to upload file' error, got %s", w.Body.String())
+	}
+
+	// Verify DB was not touched when S3 fails
+	if dbCreateCalled {
+		t.Error("DB CreateFile should not be called when S3 upload fails")
 	}
 }
 
@@ -365,7 +377,7 @@ func TestUploadFile_DBError_CleansUpS3Object(t *testing.T) {
 // =============================================================================
 
 func TestUploadFile_PDFDocument(t *testing.T) {
-	var uploadedBucket string
+	var s3Bucket, dbBucket string
 	var dbCreateCalled bool
 
 	createdFile := &repository.StorageFile{
@@ -379,16 +391,17 @@ func TestUploadFile_PDFDocument(t *testing.T) {
 	}
 
 	mockRepo := &mockRepository{
-		createFileFunc: func(_ context.Context, bucket, key, fileName, fileType string, fileSize int64, mimeType string) (*repository.StorageFile, error) {
+		createFileFunc: func(_ context.Context, bucket, key, _, _ string, _ int64, _ string) (*repository.StorageFile, error) {
 			dbCreateCalled = true
-			uploadedBucket = bucket
+			dbBucket = bucket
 			createdFile.S3Key = key
 			return createdFile, nil
 		},
 	}
 
 	mockStore := &mockStorage{
-		putObjectFunc: func(_ context.Context, _, _ string, _ io.Reader, _ int64, _ string) error {
+		putObjectFunc: func(_ context.Context, bucket, _ string, _ io.Reader, _ int64, _ string) error {
+			s3Bucket = bucket
 			return nil
 		},
 	}
@@ -399,14 +412,75 @@ func TestUploadFile_PDFDocument(t *testing.T) {
 	router := setupTestRouter()
 	router.POST("/api/v1/files", handler.UploadFile)
 
-	// Create multipart request with PDF file
+	req, w, err := createMultipartRequest("test-document.pdf", "application/pdf", "document", []byte("PDF data"))
+	if err != nil {
+		t.Fatalf("failed to create multipart request: %v", err)
+	}
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d: %s", http.StatusOK, w.Code, w.Body.String())
+	}
+
+	if !dbCreateCalled {
+		t.Error("expected repository CreateFile to be called")
+	}
+
+	// Verify correct bucket selection for documents
+	if s3Bucket != testDocsBucket {
+		t.Errorf("expected S3 bucket %s, got %s", testDocsBucket, s3Bucket)
+	}
+	if dbBucket != testDocsBucket {
+		t.Errorf("expected DB bucket %s, got %s", testDocsBucket, dbBucket)
+	}
+}
+
+func TestUploadFile_WordDocument(t *testing.T) {
+	var s3Bucket string
+	var dbCreateCalled bool
+
+	createdFile := &repository.StorageFile{
+		ID:       1,
+		S3Key:    "generated-uuid.docx",
+		S3Bucket: testDocsBucket,
+		FileName: "test-document.docx",
+		FileSize: 9,
+		MimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		FileType: "document",
+	}
+
+	mockRepo := &mockRepository{
+		createFileFunc: func(_ context.Context, bucket, key, _, _ string, _ int64, _ string) (*repository.StorageFile, error) {
+			dbCreateCalled = true
+			createdFile.S3Key = key
+			return createdFile, nil
+		},
+	}
+
+	mockStore := &mockStorage{
+		putObjectFunc: func(_ context.Context, bucket, _ string, _ io.Reader, _ int64, _ string) error {
+			s3Bucket = bucket
+			return nil
+		},
+	}
+
+	cfg := createTestConfig()
+	// Add Word document to allowed types
+	cfg.AllowedFileTypes = append(cfg.AllowedFileTypes,
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+	handler := New(mockRepo, mockStore, cfg, &mockActionLogRepo{})
+
+	router := setupTestRouter()
+	router.POST("/api/v1/files", handler.UploadFile)
+
+	// Create multipart request with Word document
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	h := make(map[string][]string)
-	h["Content-Disposition"] = []string{`form-data; name="file"; filename="test-document.pdf"`}
-	h["Content-Type"] = []string{"application/pdf"}
+	h["Content-Disposition"] = []string{`form-data; name="file"; filename="test-document.docx"`}
+	h["Content-Type"] = []string{"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
 	part, _ := writer.CreatePart(h)
-	_, _ = part.Write([]byte("PDF data"))
+	_, _ = part.Write([]byte("Word data"))
 	_ = writer.WriteField("fileType", "document")
 	_ = writer.Close()
 
@@ -423,8 +497,9 @@ func TestUploadFile_PDFDocument(t *testing.T) {
 		t.Error("expected repository CreateFile to be called")
 	}
 
-	if uploadedBucket != testDocsBucket {
-		t.Errorf("expected bucket %s, got %s", testDocsBucket, uploadedBucket)
+	// Verify correct bucket selection for Word documents
+	if s3Bucket != testDocsBucket {
+		t.Errorf("expected S3 bucket %s, got %s", testDocsBucket, s3Bucket)
 	}
 }
 
@@ -541,6 +616,131 @@ func TestUploadFile_DBError_S3CleanupFailure_ReturnsOriginalError(t *testing.T) 
 	// Original error message should still be returned
 	if !strings.Contains(w.Body.String(), "failed to create file record") {
 		t.Errorf("expected 'failed to create file record' error, got %s", w.Body.String())
+	}
+
+	// S3 cleanup error should NOT be leaked in response (security)
+	if strings.Contains(w.Body.String(), "S3 cleanup failed") {
+		t.Error("S3 cleanup error should not be leaked in response")
+	}
+}
+
+// =============================================================================
+// Upload File Hostile Filename Tests
+// =============================================================================
+
+func TestUploadFile_HostileFilenames(t *testing.T) {
+	// Test that hostile filenames are handled safely.
+	// Defense-in-depth: Go's mime/multipart sanitizes filenames to base name only,
+	// and the handler generates UUID keys for S3, so hostile filenames cannot
+	// affect storage paths. The sanitized filename is stored in DB for display.
+
+	testCases := []struct {
+		name             string
+		filename         string
+		expectedFilename string // What Go's multipart sanitizes it to
+		expectError      bool
+	}{
+		{
+			name:             "path traversal dots",
+			filename:         "../../../etc/passwd",
+			expectedFilename: "passwd", // Go sanitizes to base name
+			expectError:      false,
+		},
+		{
+			name:             "path traversal encoded",
+			filename:         "..%2F..%2F..%2Fetc%2Fpasswd",
+			expectedFilename: "..%2F..%2F..%2Fetc%2Fpasswd", // URL encoding preserved
+			expectError:      false,
+		},
+		{
+			name:             "directory separator",
+			filename:         "foo/bar/../../secret.png",
+			expectedFilename: "secret.png", // Go sanitizes to base name
+			expectError:      false,
+		},
+		{
+			name:             "windows path",
+			filename:         "C:\\Windows\\System32\\config\\SAM",
+			expectedFilename: "SAM", // Go sanitizes to base name
+			expectError:      false,
+		},
+		{
+			name:             "very long filename",
+			filename:         strings.Repeat("a", 500) + ".png",
+			expectedFilename: strings.Repeat("a", 500) + ".png",
+			expectError:      false,
+		},
+		{
+			name:             "simple valid filename",
+			filename:         "normal-file.png",
+			expectedFilename: "normal-file.png",
+			expectError:      false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var storedFilename string
+			var s3Key string
+
+			createdFile := &repository.StorageFile{
+				ID:       1,
+				S3Key:    "uuid-key.png",
+				S3Bucket: testImagesBucket,
+				FileName: tc.expectedFilename,
+				FileSize: 8,
+				MimeType: "image/png",
+				FileType: "portfolio-image",
+			}
+
+			mockRepo := &mockRepository{
+				createFileFunc: func(_ context.Context, _, key, fileName, _ string, _ int64, _ string) (*repository.StorageFile, error) {
+					storedFilename = fileName
+					s3Key = key
+					createdFile.S3Key = key
+					return createdFile, nil
+				},
+			}
+
+			mockStore := &mockStorage{
+				putObjectFunc: func(_ context.Context, _, _ string, _ io.Reader, _ int64, _ string) error {
+					return nil
+				},
+			}
+
+			cfg := createTestConfig()
+			handler := New(mockRepo, mockStore, cfg, &mockActionLogRepo{})
+
+			router := setupTestRouter()
+			router.POST("/api/v1/files", handler.UploadFile)
+
+			req, w, err := createMultipartRequest(tc.filename, "image/png", "portfolio-image", []byte("png data"))
+			if err != nil {
+				t.Fatalf("failed to create multipart request: %v", err)
+			}
+			router.ServeHTTP(w, req)
+
+			if tc.expectError {
+				if w.Code == http.StatusOK {
+					t.Errorf("expected error for hostile filename %q, got success", tc.filename)
+				}
+			} else {
+				if w.Code != http.StatusOK {
+					t.Errorf("expected success, got status %d: %s", w.Code, w.Body.String())
+					return
+				}
+
+				// Verify filename was sanitized by Go's multipart and stored
+				if storedFilename != tc.expectedFilename {
+					t.Errorf("expected stored filename %q, got %q", tc.expectedFilename, storedFilename)
+				}
+
+				// S3 key should be a generated UUID, not the hostile filename
+				if strings.Contains(s3Key, "..") || strings.Contains(s3Key, "/") || strings.Contains(s3Key, "\\") {
+					t.Errorf("S3 key should not contain path components: %s", s3Key)
+				}
+			}
+		})
 	}
 }
 
