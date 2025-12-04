@@ -33,18 +33,14 @@ go test -v -run UploadFile ./internal/handlers/
 
 ## Test Files
 
-**`handler_test.go`** - 22 tests
+**Handler tests** - 34 tests (81.0% coverage)
 
-| Category | Tests | Coverage |
-|----------|-------|----------|
-| Delete File | 5 | Delete + error cases |
-| File Type to Bucket | 4 | Bucket mapping |
-| Content Type Validation | 1 | Allowed content types (7 subtests) |
-| Bucket for File Type | 1 | File type + content type validation (8 subtests) |
-| Download File | 4 | Download + error cases |
-| Upload File | 4 | Upload validation |
-| Constructor | 1 | Handler initialization |
-| Context Propagation | 2 | Verifies context with sentinel value |
+| File | Tests | Coverage |
+| ---- | ----- | -------- |
+| `delete_test.go` | 7 | Success, invalid ID, not found, errors, context |
+| `download_test.go` | 5 | Invalid type, not found, DB error, storage, context |
+| `upload_test.go` | 14 | Success, validation, S3/DB errors, cleanup, documents |
+| `handler_test.go` | 8 | Bucket mapping, content types, constructor |
 
 ## Key Testing Patterns
 
@@ -101,6 +97,8 @@ file := createTestFile()
 - File too large (400 Bad Request)
 - Invalid content type (400 Bad Request)
 - Invalid file type (400 Bad Request)
+- S3 storage errors (500 Internal Server Error)
+- Database errors with S3 cleanup verification
 
 ## API Characteristics
 
@@ -133,8 +131,8 @@ mockStore := &mockStorage{
 handler := New(mockRepo, mockStore, cfg, &mockActionLogRepo{})
 ```
 
-Tests cover S3 deletion, validation, error handling, and repository interactions.
-Upload success paths require integration tests with a real MinIO instance.
+Tests cover S3 operations (upload, download, delete), validation, error handling,
+and repository interactions. The upload success path is fully tested with mocks.
 
 ## Contributing Tests
 
