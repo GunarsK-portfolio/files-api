@@ -3,23 +3,27 @@
 ## Overview
 
 The files-api uses Go's standard `testing` package with httptest for handler
-unit tests. This service handles file uploads/downloads to MinIO/S3 storage.
+and route-level unit tests. **48 tests total** across handlers and routes.
+This service handles file uploads/downloads to MinIO/S3 storage.
 
 ## Quick Commands
 
 ```bash
 # Run all tests
-go test ./internal/handlers/
+go test ./...
 
 # Run with coverage
-go test -cover ./internal/handlers/
+go test -cover ./...
 
 # Generate coverage report
-go test -coverprofile=coverage.out ./internal/handlers/
+go test -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out -o coverage.html
 
-# Run specific test
-go test -v -run TestUploadFile_MissingFile ./internal/handlers/
+# Run handler tests only
+go test -v ./internal/handlers/
+
+# Run route RBAC tests only
+go test -v ./internal/routes/
 
 # Run all Delete tests
 go test -v -run DeleteFile ./internal/handlers/
@@ -29,11 +33,14 @@ go test -v -run DownloadFile ./internal/handlers/
 
 # Run all Upload tests
 go test -v -run UploadFile ./internal/handlers/
+
+# Run permission tests
+go test -v -run Permission ./internal/routes/
 ```
 
 ## Test Files
 
-**Handler tests** - 35 tests
+### `internal/handlers/` - 35 tests
 
 | File | Tests | Coverage |
 | ---- | ----- | -------- |
@@ -41,6 +48,15 @@ go test -v -run UploadFile ./internal/handlers/
 | `download_test.go` | 6 | Invalid type, not found, errors, traversal |
 | `upload_test.go` | 15 | Success, validation, S3/DB errors, cleanup, hostiles |
 | `handler_test.go` | 7 | Bucket mapping, content types, constructor |
+
+### `internal/routes/` - 13 tests
+
+| Category | Tests | Coverage |
+| -------- | ----- | -------- |
+| Files Routes Forbidden | 2 | POST/DELETE return 403 without permission |
+| Files Routes Allowed | 2 | POST/DELETE accessible with correct permission |
+| Permission Hierarchy | 6 | delete > edit > read > none hierarchy |
+| Middleware Error Handling | 3 | No scopes (401), invalid format (500), repo errors |
 
 ## Key Testing Patterns
 
