@@ -46,8 +46,8 @@ func Setup(router *gin.Engine, handler *handlers.Handler, cfg *config.Config, me
 		protected := v1.Group("/")
 		protected.Use(authMiddleware.ValidateToken())
 		{
-			protected.POST("/files", handler.UploadFile)
-			protected.DELETE("/files/:id", handler.DeleteFile)
+			protected.POST("/files", common.RequirePermission(common.ResourceFiles, common.LevelEdit), handler.UploadFile)
+			protected.DELETE("/files/:id", common.RequirePermission(common.ResourceFiles, common.LevelDelete), handler.DeleteFile)
 		}
 	}
 
