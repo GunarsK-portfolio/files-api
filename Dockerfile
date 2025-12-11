@@ -14,7 +14,7 @@ COPY . .
 RUN go build -o files-api ./cmd/api
 
 # Production stage
-FROM alpine:3.22
+FROM alpine:3.23
 
 RUN apk upgrade --no-cache && apk --no-cache add ca-certificates
 
