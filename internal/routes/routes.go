@@ -12,7 +12,7 @@ import (
 	common "github.com/GunarsK-portfolio/portfolio-common/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	swaggerFiles "github.com/swaggo/files"
+	swaggerFiles "github.com/swaggo/files/v2"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
