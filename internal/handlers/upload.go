@@ -20,7 +20,7 @@ import (
 // @Accept multipart/form-data
 // @Produce json
 // @Param file formData file true "File to upload"
-// @Param fileType formData string true "File type: portfolio-image, miniature-image, document"
+// @Param fileType formData string true "File type: portfolio-image, miniature-image, hero-avatar, document"
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
@@ -38,7 +38,7 @@ func (h *Handler) UploadFile(c *gin.Context) {
 	// Get required fileType parameter
 	fileType := c.PostForm("fileType")
 	if fileType == "" {
-		commonHandlers.RespondError(c, http.StatusBadRequest, "fileType is required (portfolio-image, miniature-image, document)")
+		commonHandlers.RespondError(c, http.StatusBadRequest, "fileType is required (portfolio-image, miniature-image, hero-avatar, document)")
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *Handler) getBucketForFileType(fileType, contentType string) (string, er
 
 	// Validate content type matches fileType
 	switch fileType {
-	case "portfolio-image", "miniature-image":
+	case "portfolio-image", "miniature-image", "hero-avatar":
 		if !strings.HasPrefix(contentType, "image/") {
 			return "", fmt.Errorf("%s requires image content type", fileType)
 		}

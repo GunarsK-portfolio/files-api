@@ -32,6 +32,7 @@ const (
 	testImagesBucket = "images"
 	testDocsBucket   = "documents"
 	testMiniBucket   = "miniatures"
+	testAvatarBucket = "character-portraits"
 )
 
 // =============================================================================
@@ -155,6 +156,7 @@ func createTestConfig() *config.Config {
 			ImagesBucket:     testImagesBucket,
 			DocumentsBucket:  testDocsBucket,
 			MiniaturesBucket: testMiniBucket,
+			AvatarsBucket:    testAvatarBucket,
 		},
 		MaxFileSize:      testMaxFileSize,
 		AllowedFileTypes: []string{"image/png", "image/jpeg", "image/gif", "application/pdf"},

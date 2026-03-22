@@ -9,9 +9,11 @@ func (h *Handler) fileTypeToBucket(fileType string) (string, error) {
 		return h.cfg.ImagesBucket, nil
 	case "miniature-image":
 		return h.cfg.MiniaturesBucket, nil
+	case "hero-avatar":
+		return h.cfg.AvatarsBucket, nil
 	case "document":
 		return h.cfg.DocumentsBucket, nil
 	default:
-		return "", fmt.Errorf("invalid fileType: must be portfolio-image, miniature-image, or document")
+		return "", fmt.Errorf("invalid fileType: must be portfolio-image, miniature-image, hero-avatar, or document")
 	}
 }
