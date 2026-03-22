@@ -73,6 +73,19 @@ func TestFileTypeToBucket_Document(t *testing.T) {
 	}
 }
 
+func TestFileTypeToBucket_HeroAvatar(t *testing.T) {
+	cfg := createTestConfig()
+	handler := New(&mockRepository{}, nil, cfg, &mockActionLogRepo{})
+
+	bucket, err := handler.fileTypeToBucket("hero-avatar")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if bucket != testAvatarBucket {
+		t.Errorf("expected bucket %s, got %s", testAvatarBucket, bucket)
+	}
+}
+
 func TestFileTypeToBucket_Invalid(t *testing.T) {
 	cfg := createTestConfig()
 	handler := New(&mockRepository{}, nil, cfg, &mockActionLogRepo{})
@@ -135,10 +148,15 @@ func TestGetBucketForFileType_ValidCombinations(t *testing.T) {
 		{"portfolio-image", "image/jpeg", testImagesBucket, false},
 		{"miniature-image", "image/png", testMiniBucket, false},
 		{"miniature-image", "image/gif", testMiniBucket, false},
+		{"hero-avatar", "image/png", testAvatarBucket, false},
+		{"hero-avatar", "image/jpeg", testAvatarBucket, false},
+		{"hero-avatar", "image/webp", testAvatarBucket, false},
+		{"hero-avatar", "image/gif", testAvatarBucket, false},
 		{"document", "application/pdf", testDocsBucket, false},
 		// Invalid combinations
 		{"portfolio-image", "application/pdf", "", true},
 		{"miniature-image", "text/plain", "", true},
+		{"hero-avatar", "application/pdf", "", true},
 		{"document", "image/png", "", true},
 	}
 
