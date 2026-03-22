@@ -151,6 +151,7 @@ func TestGetBucketForFileType_ValidCombinations(t *testing.T) {
 		{"hero-avatar", "image/png", testAvatarBucket, false},
 		{"hero-avatar", "image/jpeg", testAvatarBucket, false},
 		{"hero-avatar", "image/webp", testAvatarBucket, false},
+		{"hero-avatar", "image/gif", testAvatarBucket, false},
 		{"document", "application/pdf", testDocsBucket, false},
 		// Invalid combinations
 		{"portfolio-image", "application/pdf", "", true},
