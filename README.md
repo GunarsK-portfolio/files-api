@@ -19,7 +19,7 @@ File upload/download service for portfolio platform.
 
 ## Tech Stack
 
-- **Language**: Go 1.25.3
+- **Language**: Go 1.26.4
 - **Framework**: Gin
 - **Database**: PostgreSQL (GORM)
 - **Storage**: MinIO (S3-compatible)
@@ -27,7 +27,7 @@ File upload/download service for portfolio platform.
 
 ## Prerequisites
 
-- Go 1.25+
+- Go 1.26+
 - Node.js 22+ and npm 11+
 - PostgreSQL (or use Docker Compose)
 - MinIO (or use Docker Compose)
