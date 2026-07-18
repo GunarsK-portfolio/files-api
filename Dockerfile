@@ -14,7 +14,7 @@ COPY . .
 RUN go build -o files-api ./cmd/api
 
 # Production stage
-FROM alpine:3.23.4
+FROM alpine:3.24.1
 
 # Security update - CACHE_BUST is set by CI to force fresh apk upgrade
 ARG CACHE_BUST
