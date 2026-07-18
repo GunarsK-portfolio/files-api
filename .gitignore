@@ -21,6 +21,10 @@ coverage.txt
 .env
 .env.local
 
+# Security scan reports
+gosec-report.json
+
+
 # Dependencies
 vendor/
 
